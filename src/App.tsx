@@ -15,7 +15,16 @@ import SupervisorDashboard from '@/pages/SupervisorDashboard';
 import WorkerGridPage from '@/pages/WorkerGridPage';
 import SOSResponsePage from '@/pages/SOSResponsePage';
 import AdminDashboard from '@/pages/AdminDashboard';
+import KilnSiteManagerPage from '@/pages/KilnSiteManagerPage';
+import UserManagerPage from '@/pages/UserManagerPage';
 import ComplianceReportsPage from '@/pages/ComplianceReportsPage';
+import AnalyticsPage from '@/pages/AnalyticsPage';
+import SystemAlertsPage from '@/pages/SystemAlertsPage';
+import ShiftSchedulerPage from '@/pages/ShiftSchedulerPage';
+import SettingsPage from '@/pages/SettingsPage';
+import WorkerShiftsPage from '@/pages/WorkerShiftsPage';
+import HealthLogPage from '@/pages/HealthLogPage';
+import HydrationLogPage from '@/pages/HydrationLogPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 
 /** Layout with sidebar for authenticated pages */
@@ -77,10 +86,7 @@ function AppRoutes() {
           path="/worker/shifts"
           element={
             <ProtectedRoute allowedRoles={['worker', 'supervisor', 'admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">My Shifts</h2>
-                <p>Shift history and details — coming soon</p>
-              </div>
+              <WorkerShiftsPage />
             </ProtectedRoute>
           }
         />
@@ -88,10 +94,7 @@ function AppRoutes() {
           path="/worker/health"
           element={
             <ProtectedRoute allowedRoles={['worker', 'supervisor', 'admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">Health Log</h2>
-                <p>Body temperature and symptom tracking — coming soon</p>
-              </div>
+              <HealthLogPage />
             </ProtectedRoute>
           }
         />
@@ -99,10 +102,7 @@ function AppRoutes() {
           path="/worker/hydration"
           element={
             <ProtectedRoute allowedRoles={['worker', 'supervisor', 'admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">Hydration Log</h2>
-                <p>Water intake tracking — coming soon</p>
-              </div>
+              <HydrationLogPage />
             </ProtectedRoute>
           }
         />
@@ -128,10 +128,7 @@ function AppRoutes() {
           path="/supervisor/alerts"
           element={
             <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">Alert Manager</h2>
-                <p>Full alert management — coming soon</p>
-              </div>
+              <SystemAlertsPage />
             </ProtectedRoute>
           }
         />
@@ -139,10 +136,7 @@ function AppRoutes() {
           path="/supervisor/shifts"
           element={
             <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">Shift Scheduler</h2>
-                <p>Shift creation and management — coming soon</p>
-              </div>
+              <ShiftSchedulerPage />
             </ProtectedRoute>
           }
         />
@@ -168,10 +162,7 @@ function AppRoutes() {
           path="/admin/sites"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">Kiln Site Manager</h2>
-                <p>Create and manage kiln sites — coming soon</p>
-              </div>
+              <KilnSiteManagerPage />
             </ProtectedRoute>
           }
         />
@@ -179,10 +170,7 @@ function AppRoutes() {
           path="/admin/users"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">User Manager</h2>
-                <p>Manage users and roles — coming soon</p>
-              </div>
+              <UserManagerPage />
             </ProtectedRoute>
           }
         />
@@ -190,10 +178,7 @@ function AppRoutes() {
           path="/admin/alerts"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">System Alerts</h2>
-                <p>All alerts across sites — coming soon</p>
-              </div>
+              <SystemAlertsPage />
             </ProtectedRoute>
           }
         />
@@ -209,10 +194,7 @@ function AppRoutes() {
           path="/admin/analytics"
           element={
             <ProtectedRoute allowedRoles={['admin', 'ngo']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">Analytics</h2>
-                <p>Charts and trend analysis — coming soon</p>
-              </div>
+              <AnalyticsPage />
             </ProtectedRoute>
           }
         />
@@ -220,10 +202,7 @@ function AppRoutes() {
           path="/admin/settings"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">Settings</h2>
-                <p>App-wide configuration — coming soon</p>
-              </div>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />
@@ -233,10 +212,7 @@ function AppRoutes() {
           path="/settings"
           element={
             <ProtectedRoute>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">Settings</h2>
-                <p>Language, notifications, and theme — coming soon</p>
-              </div>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />
