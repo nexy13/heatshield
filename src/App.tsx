@@ -12,7 +12,10 @@ import RegisterPage from '@/pages/RegisterPage';
 import WorkerDashboard from '@/pages/WorkerDashboard';
 import SOSPage from '@/pages/SOSPage';
 import SupervisorDashboard from '@/pages/SupervisorDashboard';
+import WorkerGridPage from '@/pages/WorkerGridPage';
+import SOSResponsePage from '@/pages/SOSResponsePage';
 import AdminDashboard from '@/pages/AdminDashboard';
+import ComplianceReportsPage from '@/pages/ComplianceReportsPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 
 /** Layout with sidebar for authenticated pages */
@@ -117,10 +120,7 @@ function AppRoutes() {
           path="/supervisor/workers"
           element={
             <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">Worker Grid</h2>
-                <p>Full worker management view — coming soon</p>
-              </div>
+              <WorkerGridPage />
             </ProtectedRoute>
           }
         />
@@ -150,10 +150,7 @@ function AppRoutes() {
           path="/supervisor/sos"
           element={
             <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">SOS Response</h2>
-                <p>Active SOS events with GPS map — coming soon</p>
-              </div>
+              <SOSResponsePage />
             </ProtectedRoute>
           }
         />
@@ -204,10 +201,7 @@ function AppRoutes() {
           path="/admin/compliance"
           element={
             <ProtectedRoute allowedRoles={['admin', 'ngo']}>
-              <div className="text-center py-20 text-[var(--color-text-muted)]">
-                <h2 className="text-2xl font-bold mb-2">Compliance Reports</h2>
-                <p>Safety compliance grades and trends — coming soon</p>
-              </div>
+              <ComplianceReportsPage />
             </ProtectedRoute>
           }
         />

@@ -4,7 +4,7 @@ import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/
 
 type PostgresEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
-interface UseRealtimeOptions<T> {
+interface UseRealtimeOptions<T extends { [key: string]: any }> {
   /** Table name to subscribe to */
   table: string;
   /** Postgres change event to listen for */
@@ -21,7 +21,7 @@ interface UseRealtimeOptions<T> {
  * Hook for Supabase Realtime subscriptions.
  * Automatically subscribes on mount and cleans up on unmount.
  */
-export function useRealtime<T extends Record<string, unknown> = Record<string, unknown>>({
+export function useRealtime<T extends { [key: string]: any } = { [key: string]: any }>({
   table,
   event = '*',
   filter,
