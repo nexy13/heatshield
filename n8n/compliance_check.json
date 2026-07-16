@@ -1,0 +1,65 @@
+{
+  "name": "HeatShield - Compliance Check",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 22 * * *" }] }
+      },
+      "name": "Daily at 10 PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/kiln_sites?status=eq.active",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "headers": {
+            "apikey": "={{$env.SUPABASE_ANON_KEY}}",
+            "Authorization": "Bearer ={{$env.SUPABASE_SERVICE_KEY}}"
+          }
+        }
+      },
+      "name": "Get Active Sites",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/compliance_reports",
+        "method": "POST",
+        "body": {
+          "site_id": "={{$json.id}}",
+          "report_date": "={{$today.format('YYYY-MM-DD')}}",
+          "total_workers": "={{$json.worker_count}}",
+          "workers_with_water_breaks": "={{$json.hydrated_count}}",
+          "sos_events_count": "={{$json.sos_count}}",
+          "alerts_triggered": "={{$json.alert_count}}",
+          "avg_heat_index": "={{$json.avg_heat_index}}",
+          "compliance_grade": "={{$json.grade}}"
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "headers": {
+            "apikey": "={{$env.SUPABASE_ANON_KEY}}",
+            "Authorization": "Bearer ={{$env.SUPABASE_SERVICE_KEY}}",
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+          }
+        }
+      },
+      "name": "Insert Compliance Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "typeVersion": 3
+    }
+  ],
+  "connections": {
+    "Daily at 10 PM": { "main": [[{ "node": "Get Active Sites", "type": "main", "index": 0 }]] },
+    "Get Active Sites": { "main": [[{ "node": "Insert Compliance Report", "type": "main", "index": 0 }]] }
+  }
+}

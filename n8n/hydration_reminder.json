@@ -1,0 +1,77 @@
+{
+  "name": "HeatShield - Hydration Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 30 }]
+        }
+      },
+      "name": "Every 30 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/shifts?status=eq.active&select=*,worker:workers(*,user:users(*))",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "headers": {
+            "apikey": "={{$env.SUPABASE_ANON_KEY}}",
+            "Authorization": "Bearer ={{$env.SUPABASE_SERVICE_KEY}}"
+          }
+        }
+      },
+      "name": "Get Active Shifts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/hydration_logs?worker_id=eq.{{$json.worker.id}}&logged_at=gte.{{$now.minus(30, 'minutes').toISO()}}&order=logged_at.desc&limit=1",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "headers": {
+            "apikey": "={{$env.SUPABASE_ANON_KEY}}",
+            "Authorization": "Bearer ={{$env.SUPABASE_SERVICE_KEY}}"
+          }
+        }
+      },
+      "name": "Check Last Hydration",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{$json.length === 0}}", "value2": true }]
+        }
+      },
+      "name": "No Recent Hydration?",
+      "type": "n8n-nodes-base.if",
+      "position": [850, 300],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "message": "💧 HeatShield Reminder: It's time for a water break! Drink at least 250ml of water and rest in shade for 10 minutes. Your health matters! 🛡️",
+        "to": "={{$json.worker.user.phone}}"
+      },
+      "name": "Send SMS Reminder",
+      "type": "n8n-nodes-base.twilio",
+      "position": [1050, 250],
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Every 30 Minutes": { "main": [[{ "node": "Get Active Shifts", "type": "main", "index": 0 }]] },
+    "Get Active Shifts": { "main": [[{ "node": "Check Last Hydration", "type": "main", "index": 0 }]] },
+    "Check Last Hydration": { "main": [[{ "node": "No Recent Hydration?", "type": "main", "index": 0 }]] },
+    "No Recent Hydration?": { "main": [[{ "node": "Send SMS Reminder", "type": "main", "index": 0 }]] }
+  }
+}

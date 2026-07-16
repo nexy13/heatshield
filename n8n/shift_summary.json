@@ -1,0 +1,45 @@
+{
+  "name": "HeatShield - Shift Summary",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 20 * * *" }] }
+      },
+      "name": "Daily at 8 PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/shifts?status=eq.completed&start_time=gte.{{$today.toISO()}}&select=*,worker:workers(*,user:users(*))",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "headers": {
+            "apikey": "={{$env.SUPABASE_ANON_KEY}}",
+            "Authorization": "Bearer ={{$env.SUPABASE_SERVICE_KEY}}"
+          }
+        }
+      },
+      "name": "Get Today's Completed Shifts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "message": "📋 Daily Shift Summary — {{$today.format('DD MMM YYYY')}}\n\nTotal shifts completed: {{$json.length}}\nAvg heat index: {{$json.avg_heat_index}}°C\nTotal water breaks: {{$json.total_water_breaks}}\n\nDetailed report available in HeatShield dashboard.",
+        "to": "={{$env.SUPERVISOR_PHONE}}"
+      },
+      "name": "Send Summary SMS",
+      "type": "n8n-nodes-base.twilio",
+      "position": [650, 300],
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Daily at 8 PM": { "main": [[{ "node": "Get Today's Completed Shifts", "type": "main", "index": 0 }]] },
+    "Get Today's Completed Shifts": { "main": [[{ "node": "Send Summary SMS", "type": "main", "index": 0 }]] }
+  }
+}

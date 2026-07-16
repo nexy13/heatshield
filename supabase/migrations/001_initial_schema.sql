@@ -1,0 +1,504 @@
+-- ============================================
+-- HeatShield AI — Full Database Schema
+-- Paste this ENTIRE script into Supabase SQL Editor and click "Run"
+-- ============================================
+
+-- 1. Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ============================================
+-- TABLES
+-- ============================================
+
+-- 2. Users table (extends Supabase auth.users)
+CREATE TABLE IF NOT EXISTS public.users (
+  id UUID REFERENCES auth.users(id) PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  phone TEXT,
+  role TEXT NOT NULL CHECK (role IN ('worker', 'supervisor', 'admin', 'ngo')),
+  language_pref TEXT DEFAULT 'hi',
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Kiln Sites table
+CREATE TABLE IF NOT EXISTS public.kiln_sites (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  name TEXT NOT NULL,
+  address TEXT,
+  latitude FLOAT NOT NULL,
+  longitude FLOAT NOT NULL,
+  region TEXT,
+  owner_id UUID REFERENCES public.users(id),
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. Workers table
+CREATE TABLE IF NOT EXISTS public.workers (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) UNIQUE,
+  site_id UUID REFERENCES public.kiln_sites(id),
+  emergency_contact_name TEXT,
+  emergency_contact_phone TEXT,
+  blood_group TEXT,
+  medical_conditions JSONB DEFAULT '[]',
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'on_leave')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 5. Supervisors table
+CREATE TABLE IF NOT EXISTS public.supervisors (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) UNIQUE,
+  site_id UUID REFERENCES public.kiln_sites(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 6. Shifts table
+CREATE TABLE IF NOT EXISTS public.shifts (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  worker_id UUID REFERENCES public.workers(id) ON DELETE CASCADE,
+  site_id UUID REFERENCES public.kiln_sites(id),
+  start_time TIMESTAMPTZ NOT NULL,
+  end_time TIMESTAMPTZ,
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'completed', 'terminated')),
+  avg_heat_index FLOAT,
+  water_breaks_taken INT DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. Weather Readings table
+CREATE TABLE IF NOT EXISTS public.weather_readings (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  site_id UUID REFERENCES public.kiln_sites(id) ON DELETE CASCADE,
+  temperature_c FLOAT NOT NULL,
+  humidity_pct FLOAT NOT NULL,
+  heat_index FLOAT NOT NULL,
+  wind_speed_kmh FLOAT,
+  condition TEXT,
+  risk_level TEXT CHECK (risk_level IN ('low', 'moderate', 'high', 'extreme', 'danger')),
+  raw_api_response JSONB,
+  recorded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 8. Health Logs table
+CREATE TABLE IF NOT EXISTS public.health_logs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  worker_id UUID REFERENCES public.workers(id) ON DELETE CASCADE,
+  shift_id UUID REFERENCES public.shifts(id) ON DELETE SET NULL,
+  body_temp_c FLOAT,
+  heart_rate_bpm INT,
+  symptoms TEXT,
+  reported_by TEXT CHECK (reported_by IN ('self', 'supervisor', 'system')),
+  recorded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 9. Alerts table
+CREATE TABLE IF NOT EXISTS public.alerts (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  site_id UUID REFERENCES public.kiln_sites(id) ON DELETE CASCADE,
+  shift_id UUID REFERENCES public.shifts(id) ON DELETE SET NULL,
+  worker_id UUID REFERENCES public.workers(id) ON DELETE SET NULL,
+  alert_type TEXT NOT NULL CHECK (alert_type IN ('heat_warning', 'hydration', 'sos', 'compliance', 'system')),
+  severity TEXT NOT NULL CHECK (severity IN ('info', 'warning', 'critical', 'emergency')),
+  message TEXT NOT NULL,
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'acknowledged', 'resolved')),
+  action_taken TEXT,
+  resolved_by UUID REFERENCES public.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  resolved_at TIMESTAMPTZ
+);
+
+-- 10. SOS Events table
+CREATE TABLE IF NOT EXISTS public.sos_events (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  worker_id UUID REFERENCES public.workers(id) ON DELETE CASCADE,
+  site_id UUID REFERENCES public.kiln_sites(id),
+  latitude FLOAT,
+  longitude FLOAT,
+  status TEXT DEFAULT 'triggered' CHECK (status IN ('triggered', 'responding', 'resolved', 'false_alarm')),
+  description TEXT,
+  responded_by UUID REFERENCES public.users(id),
+  triggered_at TIMESTAMPTZ DEFAULT NOW(),
+  resolved_at TIMESTAMPTZ
+);
+
+-- 11. Hydration Logs table
+CREATE TABLE IF NOT EXISTS public.hydration_logs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  worker_id UUID REFERENCES public.workers(id) ON DELETE CASCADE,
+  shift_id UUID REFERENCES public.shifts(id) ON DELETE SET NULL,
+  water_ml INT NOT NULL DEFAULT 250,
+  reminder_type TEXT CHECK (reminder_type IN ('scheduled', 'manual', 'system')),
+  was_reminded BOOLEAN DEFAULT false,
+  logged_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 12. Notifications Log table
+CREATE TABLE IF NOT EXISTS public.notifications_log (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  channel TEXT CHECK (channel IN ('push', 'sms', 'whatsapp', 'in_app')),
+  title TEXT,
+  body TEXT,
+  is_read BOOLEAN DEFAULT false,
+  metadata JSONB,
+  sent_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 13. Compliance Reports table
+CREATE TABLE IF NOT EXISTS public.compliance_reports (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  site_id UUID REFERENCES public.kiln_sites(id) ON DELETE CASCADE,
+  report_date DATE NOT NULL,
+  total_workers INT DEFAULT 0,
+  workers_with_water_breaks INT DEFAULT 0,
+  sos_events_count INT DEFAULT 0,
+  alerts_triggered INT DEFAULT 0,
+  avg_heat_index FLOAT,
+  compliance_grade TEXT CHECK (compliance_grade IN ('A', 'B', 'C', 'D', 'F')),
+  details JSONB,
+  generated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(site_id, report_date)
+);
+
+-- ============================================
+-- ROW LEVEL SECURITY (RLS)
+-- ============================================
+
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.kiln_sites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.workers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.supervisors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shifts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.weather_readings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.health_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sos_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hydration_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.compliance_reports ENABLE ROW LEVEL SECURITY;
+
+-- ---- Users Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Users can read own profile" ON public.users
+    FOR SELECT USING (auth.uid() = id);
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Admins can read all users" ON public.users
+    FOR SELECT USING (
+      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Users can update themselves" ON public.users
+    FOR UPDATE USING (auth.uid() = id);
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Users can insert themselves" ON public.users
+    FOR INSERT WITH CHECK (auth.uid() = id);
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- Kiln Sites Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Authenticated users can read sites" ON public.kiln_sites
+    FOR SELECT USING (auth.role() = 'authenticated');
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage sites" ON public.kiln_sites
+    FOR ALL USING (
+      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- Workers Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Workers can read own profile" ON public.workers
+    FOR SELECT USING (user_id = auth.uid());
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Supervisors can read site workers" ON public.workers
+    FOR SELECT USING (
+      EXISTS (
+        SELECT 1 FROM public.supervisors s
+        WHERE s.user_id = auth.uid() AND s.site_id = workers.site_id
+      )
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Admins can read all workers" ON public.workers
+    FOR SELECT USING (
+      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- Supervisors Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Supervisors can read own record" ON public.supervisors
+    FOR SELECT USING (user_id = auth.uid());
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage supervisors" ON public.supervisors
+    FOR ALL USING (
+      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- Shifts Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Workers can read own shifts" ON public.shifts
+    FOR SELECT USING (
+      EXISTS (SELECT 1 FROM public.workers w WHERE w.id = worker_id AND w.user_id = auth.uid())
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Supervisors can manage site shifts" ON public.shifts
+    FOR ALL USING (
+      EXISTS (
+        SELECT 1 FROM public.supervisors s
+        WHERE s.user_id = auth.uid() AND s.site_id = shifts.site_id
+      )
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage all shifts" ON public.shifts
+    FOR ALL USING (
+      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- Weather Readings Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Authenticated users can read weather" ON public.weather_readings
+    FOR SELECT USING (auth.role() = 'authenticated');
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- Health Logs Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Workers can manage own health logs" ON public.health_logs
+    FOR ALL USING (
+      EXISTS (SELECT 1 FROM public.workers w WHERE w.id = worker_id AND w.user_id = auth.uid())
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Supervisors can manage site health logs" ON public.health_logs
+    FOR ALL USING (
+      EXISTS (
+        SELECT 1 FROM public.workers w
+        JOIN public.supervisors s ON s.site_id = w.site_id
+        WHERE w.id = worker_id AND s.user_id = auth.uid()
+      )
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- Alerts Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Site members can read alerts" ON public.alerts
+    FOR SELECT USING (
+      EXISTS (
+        SELECT 1 FROM public.workers w WHERE w.user_id = auth.uid() AND w.site_id = alerts.site_id
+      ) OR EXISTS (
+        SELECT 1 FROM public.supervisors s WHERE s.user_id = auth.uid() AND s.site_id = alerts.site_id
+      ) OR EXISTS (
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'
+      )
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Supervisors and admins can manage alerts" ON public.alerts
+    FOR UPDATE USING (
+      EXISTS (
+        SELECT 1 FROM public.supervisors s WHERE s.user_id = auth.uid() AND s.site_id = alerts.site_id
+      ) OR EXISTS (
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'
+      )
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- SOS Events Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Workers can create own SOS" ON public.sos_events
+    FOR INSERT WITH CHECK (
+      EXISTS (SELECT 1 FROM public.workers w WHERE w.id = worker_id AND w.user_id = auth.uid())
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Site members can read SOS events" ON public.sos_events
+    FOR SELECT USING (
+      EXISTS (
+        SELECT 1 FROM public.supervisors s WHERE s.user_id = auth.uid() AND s.site_id = sos_events.site_id
+      ) OR EXISTS (
+        SELECT 1 FROM public.workers w WHERE w.id = worker_id AND w.user_id = auth.uid()
+      ) OR EXISTS (
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'
+      )
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Supervisors can respond to SOS" ON public.sos_events
+    FOR UPDATE USING (
+      EXISTS (
+        SELECT 1 FROM public.supervisors s WHERE s.user_id = auth.uid() AND s.site_id = sos_events.site_id
+      ) OR EXISTS (
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'
+      )
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- Hydration Logs Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Workers can manage own hydration logs" ON public.hydration_logs
+    FOR ALL USING (
+      EXISTS (SELECT 1 FROM public.workers w WHERE w.id = worker_id AND w.user_id = auth.uid())
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Supervisors can manage site hydration logs" ON public.hydration_logs
+    FOR ALL USING (
+      EXISTS (
+        SELECT 1 FROM public.workers w
+        JOIN public.supervisors s ON s.site_id = w.site_id
+        WHERE w.id = worker_id AND s.user_id = auth.uid()
+      )
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- Notifications Log Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Users can read own notifications" ON public.notifications_log
+    FOR SELECT USING (user_id = auth.uid());
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Users can update own notifications" ON public.notifications_log
+    FOR UPDATE USING (user_id = auth.uid());
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---- Compliance Reports Policies ----
+DO $$ BEGIN
+  CREATE POLICY "Admins and NGO can read compliance reports" ON public.compliance_reports
+    FOR SELECT USING (
+      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'ngo'))
+    );
+  EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ============================================
+-- AUTH TRIGGER (auto-create profile on signup)
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, name, email, phone, role, language_pref)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1), 'User'),
+    COALESCE(NEW.email, NEW.id::text || '@guest.heatshield.app'),
+    NEW.phone,
+    COALESCE(NEW.raw_user_meta_data->>'role', 'worker'),
+    COALESCE(NEW.raw_user_meta_data->>'language_pref', 'hi')
+  )
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================
+-- HELPER FUNCTIONS
+-- ============================================
+
+-- Function to calculate heat index from temperature and humidity
+CREATE OR REPLACE FUNCTION public.calculate_heat_index(temp_c FLOAT, humidity FLOAT)
+RETURNS FLOAT AS $$
+DECLARE
+  temp_f FLOAT;
+  hi_f FLOAT;
+  hi_c FLOAT;
+BEGIN
+  -- Convert Celsius to Fahrenheit
+  temp_f := (temp_c * 9.0 / 5.0) + 32.0;
+
+  -- Rothfusz regression equation
+  hi_f := -42.379
+    + 2.04901523 * temp_f
+    + 10.14333127 * humidity
+    - 0.22475541 * temp_f * humidity
+    - 0.00683783 * temp_f * temp_f
+    - 0.05481717 * humidity * humidity
+    + 0.00122874 * temp_f * temp_f * humidity
+    + 0.00085282 * temp_f * humidity * humidity
+    - 0.00000199 * temp_f * temp_f * humidity * humidity;
+
+  -- Convert back to Celsius
+  hi_c := (hi_f - 32.0) * 5.0 / 9.0;
+
+  RETURN ROUND(hi_c::numeric, 1);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- Function to determine risk level from heat index
+CREATE OR REPLACE FUNCTION public.get_risk_level(heat_index FLOAT)
+RETURNS TEXT AS $$
+BEGIN
+  IF heat_index < 27 THEN RETURN 'low';
+  ELSIF heat_index < 32 THEN RETURN 'moderate';
+  ELSIF heat_index < 40 THEN RETURN 'high';
+  ELSIF heat_index < 52 THEN RETURN 'extreme';
+  ELSE RETURN 'danger';
+  END IF;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- ============================================
+-- DONE! All tables, policies, triggers & functions created.
+-- ============================================

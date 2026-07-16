@@ -1,0 +1,72 @@
+{
+  "name": "HeatShield - Heat Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "heat-alert",
+        "responseMode": "onReceived"
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            { "value1": "={{$json.heat_index}}", "operation": "largerEqual", "value2": 52 }
+          ]
+        }
+      },
+      "name": "Is Danger Level?",
+      "type": "n8n-nodes-base.if",
+      "position": [450, 300],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "message": "🚨 DANGER: Heat index at {{$json.heat_index}}°C at {{$json.site_name}}! ALL WORK MUST STOP IMMEDIATELY. Evacuate workers to shade. Contact: 112",
+        "to": "={{$json.supervisor_phone}}"
+      },
+      "name": "DANGER SMS to Supervisor",
+      "type": "n8n-nodes-base.twilio",
+      "position": [650, 200],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            { "value1": "={{$json.heat_index}}", "operation": "largerEqual", "value2": 40 }
+          ]
+        }
+      },
+      "name": "Is Extreme Level?",
+      "type": "n8n-nodes-base.if",
+      "position": [650, 400],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "message": "🔴 EXTREME HEAT: Index at {{$json.heat_index}}°C at {{$json.site_name}}. Reduce shifts to 4 hours, mandatory 30-min rest cycles. Ensure all workers have water access.",
+        "to": "={{$json.supervisor_phone}}"
+      },
+      "name": "EXTREME SMS to Supervisor",
+      "type": "n8n-nodes-base.twilio",
+      "position": [850, 400],
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Is Danger Level?", "type": "main", "index": 0 }]] },
+    "Is Danger Level?": {
+      "main": [
+        [{ "node": "DANGER SMS to Supervisor", "type": "main", "index": 0 }],
+        [{ "node": "Is Extreme Level?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is Extreme Level?": { "main": [[{ "node": "EXTREME SMS to Supervisor", "type": "main", "index": 0 }]] }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "name": "HeatShield - SOS Emergency",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sos-emergency",
+        "responseMode": "onReceived"
+      },
+      "name": "SOS Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "message": "🚨 SOS EMERGENCY at {{$json.site_name}}!\n\nWorker: {{$json.worker_name}}\nLocation: {{$json.latitude}}, {{$json.longitude}}\nTime: {{$json.triggered_at}}\n\nPlease respond immediately!\nMap: https://maps.google.com/?q={{$json.latitude}},{{$json.longitude}}",
+        "to": "={{$json.supervisor_phone}}"
+      },
+      "name": "SMS to Supervisor",
+      "type": "n8n-nodes-base.twilio",
+      "position": [450, 200],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "message": "🚨 Emergency Alert: {{$json.worker_name}} has triggered an SOS at {{$json.site_name}}. Please check on them immediately. Location: https://maps.google.com/?q={{$json.latitude}},{{$json.longitude}}",
+        "to": "={{$json.emergency_contact_phone}}"
+      },
+      "name": "SMS to Emergency Contact",
+      "type": "n8n-nodes-base.twilio",
+      "position": [450, 400],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/notifications_log",
+        "method": "POST",
+        "body": {
+          "user_id": "={{$json.supervisor_user_id}}",
+          "type": "sos",
+          "channel": "sms",
+          "title": "SOS Emergency",
+          "body": "Worker {{$json.worker_name}} triggered SOS at {{$json.site_name}}"
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "headers": {
+            "apikey": "={{$env.SUPABASE_ANON_KEY}}",
+            "Authorization": "Bearer ={{$env.SUPABASE_SERVICE_KEY}}",
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+          }
+        }
+      },
+      "name": "Log Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "typeVersion": 3
+    }
+  ],
+  "connections": {
+    "SOS Webhook": {
+      "main": [[
+        { "node": "SMS to Supervisor", "type": "main", "index": 0 },
+        { "node": "SMS to Emergency Contact", "type": "main", "index": 0 }
+      ]]
+    },
+    "SMS to Supervisor": { "main": [[{ "node": "Log Notification", "type": "main", "index": 0 }]] }
+  }
+}
