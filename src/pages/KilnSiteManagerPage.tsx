@@ -55,7 +55,7 @@ export default function KilnSiteManagerPage() {
                 <td className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[var(--color-bg-secondary)] flex items-center justify-center">
-                      <MapPin size={18} className="text-orange-400" />
+                      <MapPin size={18} className="text-indigo-400" />
                     </div>
                     <span className="font-semibold">{site.name}</span>
                   </div>

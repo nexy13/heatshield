@@ -180,7 +180,7 @@ export default function WorkerDashboard() {
 
         <div>
           <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <Siren size={18} className="text-orange-400" />
+            <Siren size={18} className="text-indigo-400" />
             Recent Alerts
           </h3>
           <AlertFeed alerts={alerts} maxItems={5} />

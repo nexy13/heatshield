@@ -68,7 +68,7 @@ export default function WorkerGridPage() {
                 <p className="text-xs text-[var(--color-text-muted)] mb-0.5">Heat Risk</p>
                 <p className={`font-semibold ${
                   worker.heatRisk === 'Danger' ? 'text-red-500' :
-                  worker.heatRisk === 'Extreme' ? 'text-orange-500' : 'text-emerald-400'
+                  worker.heatRisk === 'Extreme' ? 'text-amber-500' : 'text-emerald-400'
                 }`}>{worker.heatRisk}</p>
               </div>
               <div className="bg-[var(--color-bg-secondary)] p-2.5 rounded-lg">

@@ -13,7 +13,7 @@ export default function SettingsPage() {
 
       <div className="grid md:grid-cols-3 gap-6">
         <div className="space-y-2">
-          <button className="w-full text-left px-4 py-3 rounded-xl bg-orange-500/10 text-orange-400 font-medium flex items-center gap-3">
+          <button className="w-full text-left px-4 py-3 rounded-xl bg-indigo-500/10 text-indigo-400 font-medium flex items-center gap-3">
             <Shield size={18} /> Profile
           </button>
           <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] font-medium flex items-center gap-3 transition-colors">

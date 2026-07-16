@@ -34,12 +34,12 @@ export default function StatsGrid({ stats }: StatsGridProps) {
                 style={{
                   background: stat.color
                     ? `${stat.color}20`
-                    : 'rgba(249, 115, 22, 0.15)',
+                    : 'rgba(99, 102, 241, 0.12)',
                 }}
               >
                 <Icon
                   size={20}
-                  style={{ color: stat.color ?? '#f97316' }}
+                  style={{ color: stat.color ?? '#6366F1' }}
                 />
               </div>
               {stat.trend && (

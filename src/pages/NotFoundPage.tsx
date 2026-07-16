@@ -10,8 +10,8 @@ export default function NotFoundPage() {
       </div>
 
       <div className="text-center relative z-10 animate-fade-up">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center mx-auto mb-6">
-          <Shield size={40} className="text-orange-400" />
+        <div className="w-20 h-20 rounded-2xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-6">
+          <Shield size={40} className="text-indigo-400" />
         </div>
         <h1 className="text-6xl font-bold gradient-text mb-4">404</h1>
         <h2 className="text-2xl font-bold mb-2">Page not found</h2>

@@ -22,14 +22,14 @@ const gradeColors: Record<string, string> = {
   A: 'text-emerald-400 bg-emerald-500/15',
   B: 'text-blue-400 bg-blue-500/15',
   C: 'text-amber-400 bg-amber-500/15',
-  D: 'text-orange-400 bg-orange-500/15',
+  D: 'text-indigo-400 bg-indigo-500/15',
   F: 'text-red-400 bg-red-500/15',
 };
 
 const riskColors: Record<string, string> = {
   low: 'text-emerald-400',
   moderate: 'text-yellow-400',
-  high: 'text-orange-400',
+  high: 'text-amber-400',
   extreme: 'text-red-400',
   danger: 'text-red-500 font-bold',
 };
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
       {/* System Stats */}
       <StatsGrid
         stats={[
-          { label: 'Active Sites', value: demoSites.length, icon: MapPin, color: '#f97316' },
+          { label: 'Active Sites', value: demoSites.length, icon: MapPin, color: '#6366F1' },
           { label: 'Total Workers', value: totalWorkers, icon: Users, color: '#3b82f6' },
           { label: 'Active Alerts', value: alerts.filter((a) => a.status === 'active').length, icon: AlertTriangle, color: '#eab308' },
           { label: 'SOS Today', value: 1, icon: Siren, color: '#ef4444' },
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
         {/* Site Cards */}
         <div className="lg:col-span-2 space-y-3">
           <h3 className="text-lg font-semibold flex items-center gap-2">
-            <MapPin size={18} className="text-orange-400" />
+            <MapPin size={18} className="text-indigo-400" />
             Kiln Sites ({demoSites.length})
           </h3>
 
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
                           ? 'bg-gradient-to-r from-emerald-500 to-green-400'
                           : site.grade === 'B'
                             ? 'bg-gradient-to-r from-blue-500 to-cyan-400'
-                            : 'bg-gradient-to-r from-amber-500 to-orange-400'
+                            : 'bg-gradient-to-r from-amber-500 to-yellow-400'
                       }`}
                       style={{
                         width: site.grade === 'A' ? '95%' : site.grade === 'B' ? '78%' : '62%',
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
         {/* Alerts */}
         <div>
           <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <AlertTriangle size={18} className="text-orange-400" />
+            <AlertTriangle size={18} className="text-indigo-400" />
             System Alerts
           </h3>
           <AlertFeed alerts={alerts} maxItems={10} />

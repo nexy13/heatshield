@@ -14,14 +14,14 @@ export default function AnalyticsPage() {
           { label: 'Avg Compliance Score', value: '88%', icon: TrendingUp, color: '#22c55e', trend: '+4%', trendDirection: 'up' },
           { label: 'Total SOS Events', value: 3, icon: ShieldAlert, color: '#ef4444', trend: '-2', trendDirection: 'up' },
           { label: 'Avg Hydration / Shift', value: '2.4L', icon: Droplets, color: '#3b82f6', trend: '+0.2L', trendDirection: 'up' },
-          { label: 'Peak Heat Index', value: '54.2°C', icon: Thermometer, color: '#f97316' },
+          { label: 'Peak Heat Index', value: '54.2°C', icon: Thermometer, color: '#6366F1' },
         ]}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="glass rounded-2xl p-6 h-80 flex flex-col">
           <h3 className="font-semibold mb-6 flex items-center gap-2">
-            <Thermometer size={18} className="text-orange-400" /> Heat Exposure Trends (Weekly)
+            <Thermometer size={18} className="text-indigo-400" /> Heat Exposure Trends (Weekly)
           </h3>
           <div className="flex-1 border-b border-l border-[var(--color-border)] relative flex items-end justify-between px-4 pb-4 pt-10 mt-auto">
             {/* Mock Chart bars */}
@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
                   className="w-full rounded-t-sm transition-all duration-500 hover:opacity-80"
                   style={{ 
                     height: `${(val / 60) * 100}%`,
-                    background: val > 50 ? 'linear-gradient(to top, #ef4444, #f97316)' : 'linear-gradient(to top, #f59e0b, #fbbf24)'
+                    background: val > 50 ? 'linear-gradient(to top, #ef4444, #6366F1)' : 'linear-gradient(to top, #6366F1, #818CF8)'
                   }}
                 />
                 <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-[var(--color-text-muted)]">

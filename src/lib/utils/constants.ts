@@ -26,8 +26,8 @@ export const HEAT_THRESHOLDS: HeatThreshold[] = [
     level: 'High',
     minTemp: 32,
     maxTemp: 40,
-    color: '#f97316',
-    bgColor: 'rgba(249, 115, 22, 0.15)',
+    color: '#f59e0b',
+    bgColor: 'rgba(245, 158, 11, 0.15)',
     action: 'Mandatory 15-min water break every hour, shade required',
   },
   {
@@ -78,7 +78,7 @@ export const ROLE_LABELS: Record<string, string> = {
 export const RISK_GRADIENTS: Record<string, string> = {
   low: 'from-emerald-500 to-green-600',
   moderate: 'from-yellow-500 to-amber-600',
-  high: 'from-orange-500 to-red-500',
+  high: 'from-amber-500 to-red-500',
   extreme: 'from-red-600 to-rose-700',
   danger: 'from-gray-900 to-black',
 };

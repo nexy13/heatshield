@@ -19,7 +19,7 @@ const typeIcons = {
 const severityStyles = {
   info: 'border-l-blue-500 bg-blue-500/5',
   warning: 'border-l-amber-500 bg-amber-500/5',
-  critical: 'border-l-orange-500 bg-orange-500/5',
+  critical: 'border-l-indigo-500 bg-indigo-500/5',
   emergency: 'border-l-red-500 bg-red-500/5',
 };
 

@@ -25,8 +25,8 @@ export default function HydrationTimer({ onLogBreak }: HydrationTimerProps) {
   return (
     <div className="glass rounded-2xl p-6 card-hover">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center">
-          <Droplets size={20} className="text-blue-400" />
+        <div className="w-10 h-10 rounded-lg bg-indigo-500/12 flex items-center justify-center">
+          <Droplets size={20} className="text-indigo-400" />
         </div>
         <div>
           <h3 className="font-semibold">Hydration Timer</h3>
@@ -40,7 +40,7 @@ export default function HydrationTimer({ onLogBreak }: HydrationTimerProps) {
       <div className="text-center mb-4">
         <p
           className={`text-5xl font-bold font-mono tracking-wider ${
-            isExpired ? 'text-red-400 animate-pulse' : 'text-blue-400'
+            isExpired ? 'text-red-400 animate-pulse' : 'text-indigo-400'
           }`}
         >
           {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
@@ -61,10 +61,10 @@ export default function HydrationTimer({ onLogBreak }: HydrationTimerProps) {
             isExpired
               ? 'bg-red-500'
               : progress > 50
-                ? 'bg-gradient-to-r from-blue-500 to-cyan-400'
+                ? 'bg-gradient-to-r from-indigo-500 to-indigo-400'
                 : progress > 20
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-400'
-                  : 'bg-gradient-to-r from-red-500 to-orange-500'
+                  ? 'bg-gradient-to-r from-amber-500 to-yellow-400'
+                  : 'bg-gradient-to-r from-red-500 to-rose-500'
           }`}
           style={{ width: `${progress}%` }}
         />
@@ -93,7 +93,7 @@ export default function HydrationTimer({ onLogBreak }: HydrationTimerProps) {
           onClick={handleLogBreak}
           className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm ${
             isExpired
-              ? 'btn-primary bg-gradient-to-r from-blue-600 to-cyan-600 shadow-blue-500/30'
+              ? 'btn-primary bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-indigo-500/30'
               : 'btn-secondary'
           }`}
         >

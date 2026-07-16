@@ -87,7 +87,7 @@ export default function SupervisorDashboard() {
       <StatsGrid
         stats={[
           { label: 'Active Workers', value: activeWorkers, icon: Users, color: '#22c55e' },
-          { label: 'Active Alerts', value: alerts.filter((a) => a.status === 'active').length, icon: AlertTriangle, color: '#f97316' },
+          { label: 'Active Alerts', value: alerts.filter((a) => a.status === 'active').length, icon: AlertTriangle, color: '#6366F1' },
           { label: 'SOS Events', value: sosCount, icon: Siren, color: '#ef4444' },
           { label: 'Heat Index', value: '52.8°C', icon: Thermometer, color: '#ef4444' },
         ]}
@@ -98,7 +98,7 @@ export default function SupervisorDashboard() {
         {/* Worker List */}
         <div className="lg:col-span-2 space-y-3">
           <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Users size={18} className="text-orange-400" />
+            <Users size={18} className="text-indigo-400" />
             Workers on Shift ({demoWorkers.length})
           </h3>
 
@@ -150,7 +150,7 @@ export default function SupervisorDashboard() {
 
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <AlertTriangle size={18} className="text-orange-400" />
+              <AlertTriangle size={18} className="text-indigo-400" />
               Alerts
             </h3>
             <AlertFeed alerts={alerts} maxItems={5} />

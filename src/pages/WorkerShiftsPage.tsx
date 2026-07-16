@@ -16,10 +16,10 @@ export default function WorkerShiftsPage() {
 
       <div className="space-y-4">
         {mockShifts.map((shift, i) => (
-          <div key={shift.id} className={`glass rounded-xl p-5 ${i === 0 ? 'border-orange-500/30' : ''}`}>
+          <div key={shift.id} className={`glass rounded-xl p-5 ${i === 0 ? 'border-indigo-500/30' : ''}`}>
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-2">
-                <CalendarClock size={18} className={i === 0 ? 'text-orange-400' : 'text-[var(--color-text-muted)]'} />
+                <CalendarClock size={18} className={i === 0 ? 'text-indigo-400' : 'text-[var(--color-text-muted)]'} />
                 <span className="font-bold">{shift.date}</span>
               </div>
               <span className={`badge ${i === 0 ? 'badge-success' : 'badge-neutral'}`}>

@@ -66,24 +66,22 @@ export default function Sidebar() {
   const SidebarContent = () => (
     <>
       {/* Logo */}
-      <div className="px-4 py-5 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
-          <Shield size={20} className="text-white" />
+      <div className="px-5 py-5 flex items-center gap-3" style={{ borderBottom: '1px solid var(--border)', marginBottom: '0.75rem' }}>
+        <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Shield size={14} className="text-white" />
         </div>
         <div>
-          <h1 className="text-lg font-bold gradient-text">HeatShield</h1>
-          <p className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-widest">
-            AI Safety
-          </p>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 500, letterSpacing: '0.05em', color: 'var(--text)' }}>HEATSHIELD AI</h1>
+          <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 1 }}>Safety Platform</p>
         </div>
       </div>
 
       {/* Role badge */}
       {profile && (
-        <div className="mx-4 mb-4 px-3 py-2 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-          <p className="text-xs text-[var(--color-text-muted)]">Logged in as</p>
-          <p className="text-sm font-semibold truncate">{profile.name}</p>
-          <span className="badge badge-warning mt-1">{ROLE_LABELS[role ?? ''] ?? role}</span>
+        <div className="mx-4 mb-3 px-3 py-2 rounded-md" style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)' }}>
+          <p className="text-xs" style={{ color: 'var(--text-muted)', marginBottom: '0.125rem' }}>Logged in as</p>
+          <p className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>{profile.name}</p>
+          <span className="badge badge-info mt-1">{ROLE_LABELS[role ?? ''] ?? role}</span>
         </div>
       )}
 
@@ -106,7 +104,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom section */}
-      <div className="px-3 py-4 border-t border-[var(--color-border)]">
+      <div className="px-3 py-4" style={{ borderTop: '1px solid var(--border)' }}>
         <NavLink
           to="/settings"
           onClick={() => setMobileOpen(false)}
@@ -114,14 +112,15 @@ export default function Sidebar() {
             `sidebar-link ${isActive ? 'active' : ''}`
           }
         >
-          <Settings size={18} />
+          <Settings size={16} />
           <span>Settings</span>
         </NavLink>
         <button
           onClick={() => signOut()}
-          className="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10"
+          className="sidebar-link w-full"
+          style={{ color: '#B91C1C' }}
         >
-          <LogOut size={18} />
+          <LogOut size={16} />
           <span>Sign Out</span>
         </button>
       </div>

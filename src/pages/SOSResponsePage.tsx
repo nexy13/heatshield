@@ -51,7 +51,7 @@ export default function SOSResponsePage() {
 
                 <div className="flex flex-col sm:flex-row gap-3 shrink-0 md:items-start">
                   <a href="tel:112" className="btn-secondary py-2.5 px-4 rounded-xl flex items-center justify-center gap-2">
-                    <Phone size={18} className="text-orange-400" />
+                    <Phone size={18} className="text-indigo-400" />
                     Call Ambulance
                   </a>
                   <button className="btn-primary bg-gradient-to-r from-red-600 to-red-500 py-2.5 px-6 rounded-xl flex items-center justify-center gap-2">

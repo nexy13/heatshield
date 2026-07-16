@@ -46,7 +46,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md relative z-10 animate-fade-up">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
+            <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <Shield size={24} className="text-white" />
             </div>
             <span className="text-2xl font-bold gradient-text">HeatShield AI</span>
@@ -91,8 +91,8 @@ export default function RegisterPage() {
                     key={r.value}
                     className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
                       role === r.value
-                        ? 'bg-orange-500/10 border border-orange-500/30'
-                        : 'bg-[var(--color-bg-secondary)] border border-[var(--color-border)] hover:border-orange-500/20'
+                        ? 'bg-indigo-500/10 border border-indigo-500/30'
+                        : 'bg-[var(--color-bg-secondary)] border border-[var(--color-border)] hover:border-indigo-500/20'
                     }`}
                   >
                     <input
@@ -101,7 +101,7 @@ export default function RegisterPage() {
                       value={r.value}
                       checked={role === r.value}
                       onChange={() => setRole(r.value)}
-                      className="accent-orange-500"
+                      className="accent-indigo-500"
                     />
                     <div>
                       <p className="text-sm font-medium">{r.label}</p>
@@ -134,7 +134,7 @@ export default function RegisterPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-[var(--color-text-muted)]">
               Already have an account?{' '}
-              <Link to="/login" className="text-orange-400 hover:text-orange-300 font-medium">Sign in</Link>
+              <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium">Sign in</Link>
             </p>
           </div>
         </div>

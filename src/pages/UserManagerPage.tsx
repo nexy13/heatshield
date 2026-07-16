@@ -57,7 +57,7 @@ export default function UserManagerPage() {
               <tr key={user.id} className="hover:bg-[var(--color-bg-secondary)]/50 transition-colors">
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center font-bold text-orange-400">
+                    <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center font-bold text-indigo-400">
                       {user.name.charAt(0)}
                     </div>
                     <div>
@@ -79,7 +79,7 @@ export default function UserManagerPage() {
                   <button className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)] rounded-lg transition-colors inline-block mr-1">
                     <Edit2 size={16} />
                   </button>
-                  <button className="p-2 text-[var(--color-text-muted)] hover:text-orange-400 hover:bg-orange-500/10 rounded-lg transition-colors inline-block">
+                  <button className="p-2 text-[var(--color-text-muted)] hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors inline-block">
                     <ShieldAlert size={16} />
                   </button>
                 </td>

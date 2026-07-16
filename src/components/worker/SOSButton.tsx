@@ -59,7 +59,7 @@ export default function SOSButton({ onTrigger, disabled }: SOSButtonProps) {
         </div>
         {position && (
           <div className="glass rounded-xl px-4 py-3 flex items-center gap-2 text-sm">
-            <MapPin size={16} className="text-orange-400" />
+            <MapPin size={16} className="text-indigo-400" />
             <span>
               Location shared: {position.latitude.toFixed(4)}, {position.longitude.toFixed(4)}
             </span>
@@ -144,7 +144,7 @@ export default function SOSButton({ onTrigger, disabled }: SOSButtonProps) {
       </div>
       <a
         href="tel:112"
-        className="flex items-center gap-2 text-sm text-orange-400 hover:text-orange-300 transition-colors"
+        className="flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
       >
         <Phone size={16} />
         Call Emergency: 112

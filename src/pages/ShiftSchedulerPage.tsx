@@ -24,7 +24,7 @@ export default function ShiftSchedulerPage() {
           <div key={shift.id} className="glass rounded-xl p-5 card-hover">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-2">
-                <CalendarClock size={18} className="text-orange-400" />
+                <CalendarClock size={18} className="text-indigo-400" />
                 <span className="font-bold">{shift.date}</span>
               </div>
               <span className={`badge ${

@@ -36,7 +36,7 @@ export default function SOSPage() {
             href="tel:108"
             className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-bg-secondary)] hover:bg-red-500/10 transition-colors"
           >
-            <Phone size={18} className="text-orange-400" />
+            <Phone size={18} className="text-indigo-400" />
             <div>
               <p className="text-sm font-medium">Ambulance</p>
               <p className="text-xs text-[var(--color-text-muted)]">108</p>

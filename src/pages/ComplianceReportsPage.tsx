@@ -48,7 +48,7 @@ export default function ComplianceReportsPage() {
                 </td>
                 <td className="p-4">
                   {report.issues > 0 ? (
-                    <span className="text-orange-400 font-medium flex items-center gap-1">
+                    <span className="text-indigo-400 font-medium flex items-center gap-1">
                       {report.issues} Issues
                     </span>
                   ) : (
@@ -58,7 +58,7 @@ export default function ComplianceReportsPage() {
                   )}
                 </td>
                 <td className="p-4">
-                  <button className="text-sm font-medium text-orange-400 hover:text-orange-300 flex items-center gap-1">
+                  <button className="text-sm font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
                     <FileText size={14} /> View
                   </button>
                 </td>
