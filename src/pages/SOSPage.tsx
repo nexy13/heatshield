@@ -1,15 +1,68 @@
 import SOSButton from '@/components/worker/SOSButton';
 import { useAuth } from '@/context/AuthContext';
 import { Phone } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function SOSPage() {
   const { profile } = useAuth();
 
   const handleSOS = async (lat?: number, lng?: number, desc?: string) => {
-    // In production, this would call triggerSOS() from the API
-    // For demo, simulate a delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    console.log('SOS triggered:', { lat, lng, desc, user: profile?.name });
+    if (!profile?.id) return;
+
+    // 1. Fetch site info
+    let siteData = null;
+    if (profile.site_id) {
+      const { data, error } = await supabase
+        .from('sites')
+        .select('*')
+        .eq('id', profile.site_id)
+        .single();
+      if (!error) {
+        siteData = data;
+      }
+    }
+
+    // 2. Determine Dev vs Prod Webhook URL
+    const isDev = import.meta.env.DEV;
+    const webhookUrl = isDev 
+      ? 'https://nexy13.app.n8n.cloud/webhook-test/sos' 
+      : 'https://nexy13.app.n8n.cloud/webhook/sos';
+
+    // 3. Post to n8n Webhook
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        worker_id: profile.id,
+        worker_name: profile.name,
+        worker_phone: profile.phone,
+        worker_age: profile.age,
+        site_id: profile.site_id,
+        site_name: siteData?.name || 'Unknown Site',
+        site_location: siteData?.location || 'Unknown Location',
+        site_zone: siteData?.zone || 'Unknown Zone',
+        latitude: lat || null,
+        longitude: lng || null,
+        description: desc || 'Dizzy or unwell',
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to reach emergency dispatch server');
+    }
+
+    // 4. Also write alert to Supabase alerts table so supervisor/admin dashboard updates in real-time
+    const { error: alertErr } = await supabase.from('alerts').insert({
+      worker_id: profile.id,
+      alert_type: 'sos',
+      status: 'open',
+      created_at: new Date().toISOString(),
+    });
+
+    if (alertErr) {
+      console.error('Error logging SOS alert to DB:', alertErr.message);
+    }
   };
 
   return (

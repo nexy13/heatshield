@@ -69,6 +69,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['worker']}>
+              <WorkerDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/worker/sos"
           element={
             <ProtectedRoute allowedRoles={['worker', 'supervisor']}>

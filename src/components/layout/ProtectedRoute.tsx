@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     return <Spinner label="Authenticating..." />;
   }
 
-  if (!authUser) {
+  if (!authUser || !role) {
     return <Navigate to="/login" replace />;
   }
 

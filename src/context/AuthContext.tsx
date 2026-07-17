@@ -17,7 +17,11 @@ interface AuthContextType {
   /** Sign in with email and password */
   signInWithEmail: (email: string, password: string) => Promise<void>;
   /** Sign up with email, password, and metadata */
-  signUp: (email: string, password: string, metadata: { name: string; role: UserRole }) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    metadata: { name: string; role: UserRole; site_id?: string | null; age?: number | null; phone?: string | null }
+  ) => Promise<void>;
   /** Sign out */
   signOut: () => Promise<void>;
 }
@@ -30,19 +34,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user profile from public.users
-  const fetchProfile = async (userId: string) => {
+  // Fetch user profile from public.profiles
+  const fetchProfile = async (userId: string, email?: string) => {
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
 
     if (error) {
+      if (error.code === 'PGRST116') {
+        console.log('Profile missing. Re-creating default profile...');
+        const { data: sites } = await supabase.from('sites').select('id').limit(1);
+        const defaultSiteId = sites && sites.length > 0 ? sites[0].id : null;
+
+        const defaultProfile = {
+          id: userId,
+          name: email ? email.split('@')[0] : 'User',
+          role: email && (email.includes('admin') || email.includes('supervisor')) ? 'admin' : 'worker',
+          site_id: defaultSiteId,
+          age: 30,
+          phone: null,
+          health_flags: [],
+        };
+
+        const { data: newProfile, error: insertErr } = await supabase
+          .from('profiles')
+          .insert(defaultProfile)
+          .select()
+          .single();
+
+        if (!insertErr && newProfile) {
+          return newProfile as any;
+        } else {
+          console.error('Failed to auto-create profile:', insertErr?.message);
+        }
+      }
       console.error('Error fetching profile:', error.message);
       return null;
     }
-    return data as User;
+    return data as any;
   };
 
   useEffect(() => {
@@ -51,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setAuthUser(s?.user ?? null);
       if (s?.user) {
-        fetchProfile(s.user.id).then((p) => {
+        fetchProfile(s.user.id, s.user.email).then((p) => {
           setProfile(p);
           setLoading(false);
         });
@@ -59,21 +90,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     });
-
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, s) => {
         setSession(s);
         setAuthUser(s?.user ?? null);
         if (s?.user) {
-          const p = await fetchProfile(s.user.id);
+          setLoading(true);
+          const p = await fetchProfile(s.user.id, s.user.email);
           setProfile(p);
+          setLoading(false);
         } else {
           setProfile(null);
+          setLoading(false);
         }
       }
     );
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -85,16 +117,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (
     email: string,
     password: string,
-    metadata: { name: string; role: UserRole }
+    metadata: { name: string; role: UserRole; site_id?: string | null; age?: number | null; phone?: string | null }
   ) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: metadata,
+        data: {
+          name: metadata.name,
+          role: metadata.role,
+        },
       },
     });
     if (error) throw error;
+
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          name: metadata.name,
+          role: metadata.role,
+          site_id: metadata.site_id || null,
+          age: metadata.age || null,
+          phone: metadata.phone || null,
+          health_flags: [],
+        });
+      if (profileError) throw profileError;
+    }
   };
 
   const signOut = async () => {

@@ -28,6 +28,9 @@ export interface User {
   language_pref: string;
   avatar_url: string | null;
   created_at: string;
+  site_id: string | null;
+  age: number | null;
+  health_flags: string[] | null;
 }
 
 export interface KilnSite {

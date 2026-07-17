@@ -27,126 +27,213 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex' }}>
-      {/* Left panel — hero image */}
+    <div style={{
+      minHeight: '100vh',
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+      padding: '2rem 1.5rem',
+      background: 'var(--bg)',
+    }}>
+      {/* Full-bleed background image */}
+      <img
+        src="/hero.jpg"
+        alt=""
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          filter: 'brightness(0.92) contrast(0.9) saturate(0.7) blur(2px)',
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+        }}
+      />
+      {/* Warm-beige / dust tone faded overlay */}
       <div style={{
-        flex: 1,
-        background: 'var(--accent)',
-        position: 'relative',
-        overflow: 'hidden',
-        display: 'none',
-      }} className="lg:block">
-        <img
-          src="/hero.jpg"
-          alt=""
-          style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.6) saturate(0.7)', position: 'absolute', inset: 0 }}
-        />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(27,77,62,0.8) 0%, transparent 100%)' }} />
-        <div style={{ position: 'absolute', bottom: '4rem', left: '3.5rem', right: '3.5rem' }}>
-          <p style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', color: '#fff', lineHeight: 1.2, letterSpacing: '-0.01em', marginBottom: '1rem' }}>
-            Protecting lives<br />from extreme heat
-          </p>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)', fontWeight: 300, lineHeight: 1.7 }}>
-            Real-time monitoring for brick kiln workers across South Asia.
-          </p>
-        </div>
-      </div>
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(135deg, rgba(247, 246, 243, 0.85) 0%, rgba(234, 229, 218, 0.8) 100%)',
+        zIndex: 1,
+      }} />
 
-      {/* Right panel — form */}
-      <div style={{ width: '100%', maxWidth: 520, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3rem 4rem' }}>
+      {/* Centered glassmorphic card */}
+      <div
+        className="animate-fade-up"
+        style={{
+          width: '100%',
+          maxWidth: '440px',
+          background: 'rgba(255, 255, 255, 0.65)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(45, 122, 101, 0.12)',
+          borderRadius: '18px',
+          boxShadow: 'var(--shadow-lg)',
+          padding: '2.5rem 2.25rem',
+          position: 'relative',
+          zIndex: 2,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {/* Logo */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', textDecoration: 'none', marginBottom: '4rem' }}>
-          <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Shield size={14} color="#fff" />
-          </div>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 500, letterSpacing: '0.06em', color: 'var(--text)' }}>
-            HEATSHIELD AI
-          </span>
-        </Link>
-
-        <div className="animate-fade-up">
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.7rem', fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent-teal)', marginBottom: '0.75rem' }}>
-            Welcome back
-          </p>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 400, color: 'var(--text)', letterSpacing: '-0.015em', marginBottom: '0.5rem', lineHeight: 1.2 }}>
-            Sign in to your account
-          </h2>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 300, marginBottom: '2.5rem' }}>
-            Access your safety dashboard
-          </p>
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div>
-              <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '0.02em', display: 'block', marginBottom: '0.5rem' }}>
-                Email address
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={14} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                  className="input-field"
-                  style={{ paddingLeft: '2.5rem' }}
-                />
-              </div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+            <div style={{ width: 24, height: 24, borderRadius: 5, background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Shield size={12} color="#fff" />
             </div>
-
-            <div>
-              <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '0.02em', display: 'block', marginBottom: '0.5rem' }}>
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={14} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="input-field"
-                  style={{ paddingLeft: '2.5rem' }}
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div style={{
-                padding: '0.75rem 1rem',
-                borderRadius: 'var(--radius-md)',
-                background: 'rgba(185, 28, 28, 0.06)',
-                border: '1px solid rgba(185, 28, 28, 0.2)',
-                fontFamily: 'var(--font-sans)',
-                fontSize: '0.8125rem',
-                color: '#B91C1C',
-              }}>
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary"
-              style={{ marginTop: '0.5rem', padding: '0.8125rem', fontSize: '0.875rem', justifyContent: 'center', borderRadius: 6, width: '100%' }}
-            >
-              {loading ? (
-                <><Loader2 size={16} className="animate-spin" /> Signing in...</>
-              ) : (
-                <>Sign In <ArrowRight size={15} /></>
-              )}
-            </button>
-          </form>
-
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '2rem', textAlign: 'center' }}>
-            Don't have an account?{' '}
-            <Link to="/register" style={{ color: 'var(--accent-teal)', textDecoration: 'none', fontWeight: 500 }}>
-              Sign up
-            </Link>
-          </p>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.06em', color: 'var(--text)' }}>
+              HEATSHIELD AI
+            </span>
+          </Link>
         </div>
+
+        {/* Small caps eyebrow */}
+        <p style={{
+          fontFamily: 'var(--font-sans)',
+          fontSize: '0.65rem',
+          fontWeight: 500,
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          color: 'var(--text-secondary)',
+          textAlign: 'center',
+          marginBottom: '0.5rem',
+        }}>
+          SECURE ACCESS — WORKER SAFETY PLATFORM
+        </p>
+
+        {/* Title */}
+        <h2 style={{
+          fontFamily: 'var(--font-serif)',
+          fontSize: '2.25rem',
+          fontWeight: 400,
+          color: 'var(--text)',
+          textAlign: 'center',
+          letterSpacing: '-0.015em',
+          marginBottom: '2rem',
+          lineHeight: 1.2,
+        }}>
+          Login
+        </h2>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '0.02em', display: 'block', marginBottom: '0.5rem' }}>
+              Email address
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Mail size={14} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className="input-field"
+                style={{ paddingLeft: '2.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.7)', borderColor: 'rgba(27, 77, 62, 0.15)' }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '0.02em', display: 'block', marginBottom: '0.5rem' }}>
+              Password
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Lock size={14} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="input-field"
+                style={{ paddingLeft: '2.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.7)', borderColor: 'rgba(27, 77, 62, 0.15)' }}
+              />
+            </div>
+          </div>
+
+          {/* Remember me & Forgot password row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', fontFamily: 'var(--font-sans)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+              <input
+                type="checkbox"
+                style={{ accentColor: 'var(--accent-teal)', cursor: 'pointer' }}
+              />
+              <span>Remember me</span>
+            </label>
+            <Link
+              to="#"
+              style={{ color: 'var(--accent-teal)', textDecoration: 'none', fontWeight: 500, transition: 'opacity 0.2s' }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.opacity = '0.8'; }}
+              onMouseLeave={e => { (e.target as HTMLElement).style.opacity = '1'; }}
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
+          {error && (
+            <div style={{
+              padding: '0.75rem 1rem',
+              borderRadius: '4px',
+              background: 'rgba(185, 28, 28, 0.06)',
+              border: '1px solid rgba(185, 28, 28, 0.2)',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '0.8125rem',
+              color: '#B91C1C',
+            }}>
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary"
+            style={{
+              marginTop: '0.5rem',
+              padding: '0.75rem 1.75rem',
+              fontSize: '0.875rem',
+              justifyContent: 'center',
+              borderRadius: '4px',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            {loading ? (
+              <><Loader2 size={16} className="animate-spin" /> Signing in...</>
+            ) : (
+              <>Sign In <ArrowRight size={15} /></>
+            )}
+          </button>
+        </form>
+
+        <p style={{
+          fontFamily: 'var(--font-sans)',
+          fontSize: '0.8125rem',
+          color: 'var(--text-muted)',
+          marginTop: '2rem',
+          textAlign: 'center',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '0.375rem',
+        }}>
+          <span>Don't have an account?</span>
+          <Link
+            to="/register"
+            className="hero-cta-link"
+            style={{ fontWeight: 500 }}
+          >
+            <span>Sign up</span>
+            <ArrowRight size={14} />
+          </Link>
+        </p>
       </div>
     </div>
   );
