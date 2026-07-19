@@ -1,5 +1,5 @@
 // ============================================
-// HeatShield AI — Constants & Thresholds
+// HeatShield — Constants & Thresholds
 // ============================================
 
 import type { HeatThreshold } from '@/types/common';
@@ -48,8 +48,10 @@ export const HEAT_THRESHOLDS: HeatThreshold[] = [
   },
 ];
 
-/** Hydration reminder interval in minutes */
-export const HYDRATION_REMINDER_INTERVAL_MIN = 30;
+/** Default hydration reminder interval (minutes) for new sites.
+ *  The live value is per-site: kiln_sites.hydration_interval_min,
+ *  editable by the site's supervisor. */
+export const DEFAULT_HYDRATION_INTERVAL_MIN = 30;
 
 /** Default water intake per break (ml) */
 export const DEFAULT_WATER_ML = 250;
@@ -66,12 +68,10 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'hi', label: 'हिन्दी (Hindi)' },
 ] as const;
 
-/** User role labels */
+/** User role labels — the only login-capable roles are Admin and Supervisor */
 export const ROLE_LABELS: Record<string, string> = {
-  worker: 'Worker',
   supervisor: 'Supervisor',
   admin: 'Admin',
-  ngo: 'NGO Observer',
 };
 
 /** Category gradients for visual cards */
@@ -83,8 +83,17 @@ export const RISK_GRADIENTS: Record<string, string> = {
   danger: 'from-gray-900 to-black',
 };
 
+/** Risk levels UI styles */
+export const RISK_LEVELS: Record<string, { label: string; bg: string; text: string }> = {
+  low: { label: 'Low Risk', bg: 'bg-emerald-500/15', text: 'text-emerald-400' },
+  moderate: { label: 'Moderate', bg: 'bg-yellow-500/15', text: 'text-yellow-400' },
+  high: { label: 'High Risk', bg: 'bg-amber-500/15', text: 'text-amber-400' },
+  extreme: { label: 'Extreme', bg: 'bg-red-500/15', text: 'text-red-400' },
+  danger: { label: 'DANGER', bg: 'bg-red-600', text: 'text-white' },
+};
+
 /** App name */
-export const APP_NAME = 'HeatShield AI';
+export const APP_NAME = 'HeatShield';
 
 /** App tagline */
 export const APP_TAGLINE = 'Protecting lives from extreme heat';

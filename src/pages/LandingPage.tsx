@@ -77,16 +77,13 @@ export default function LandingPage() {
             letterSpacing: '0.04em',
             color: 'var(--text)',
           }}>
-            HEATSHIELD AI
+            HEATSHIELD
           </span>
         </Link>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
-          <Link to="/login" className="btn-ghost" style={{ fontSize: '0.8125rem', letterSpacing: '0.01em' }}>
-            Sign In
-          </Link>
-          <Link to="/register" className="btn-primary" style={{ borderRadius: 4 }}>
-            Get Started <ArrowRight size={13} />
+          <Link to="/login" className="btn-primary" style={{ borderRadius: 4 }}>
+            Sign In <ArrowRight size={13} />
           </Link>
         </div>
       </nav>
@@ -108,13 +105,13 @@ export default function LandingPage() {
             work in <em>extreme heat</em>
           </h1>
           <p className="hero-tagline">
-            HeatShield AI monitors brick kiln workers in real-time,
-            delivers personalized safety alerts, and enables instant
+            HeatShield monitors brick kiln workers in real-time,
+            delivers safety alerts, and enables instant
             emergency response.
           </p>
           <div className="hero-actions">
-            <Link to="/register" className="btn-primary" style={{ fontSize: '0.875rem', padding: '0.75rem 1.75rem', borderRadius: 4 }}>
-              Start Protecting Workers
+            <Link to="/login" className="btn-primary" style={{ fontSize: '0.875rem', padding: '0.75rem 1.75rem', borderRadius: 4 }}>
+              Supervisor Portal
             </Link>
             <Link to="/login" className="hero-cta-link">
               Sign in to dashboard <ArrowRight size={14} />
@@ -154,13 +151,13 @@ export default function LandingPage() {
         <div className="animate-fade-up animate-fade-up-delay-2" style={{ paddingTop: '0.5rem' }}>
           <p className="section-body">
             Brick kiln workers in South Asia face extreme heat exposure
-            with little protection or recourse. HeatShield AI brings
+            with little protection or recourse. HeatShield brings
             enterprise-grade safety monitoring to the field — accessible
-            from any phone, in any language, at any time.
+            from any kiosk, at any time.
           </p>
           <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <Link to="/register" className="btn-primary" style={{ borderRadius: 4 }}>
-              Deploy at your site
+            <Link to="/login" className="btn-primary" style={{ borderRadius: 4 }}>
+              Supervisor Portal
             </Link>
             <a href="#features" className="hero-cta-link" style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
               See how it works <ArrowRight size={13} />
@@ -290,10 +287,10 @@ export default function LandingPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'flex-start' }}>
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', fontWeight: 300, color: 'rgba(255,255,255,0.65)', lineHeight: 1.75, maxWidth: 380 }}>
               Join the mission to protect brick kiln workers from
-              heat-related illness. Deploy HeatShield AI at your site today.
+              heat-related illness. Deploy HeatShield at your site today.
             </p>
             <Link
-              to="/register"
+              to="/login"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                 background: '#fff', color: 'var(--accent)',
@@ -304,7 +301,7 @@ export default function LandingPage() {
               onMouseEnter={e => { (e.target as HTMLElement).style.opacity = '0.9'; }}
               onMouseLeave={e => { (e.target as HTMLElement).style.opacity = '1'; }}
             >
-              Get Started Free <ArrowRight size={14} />
+              Supervisor Portal <ArrowRight size={14} />
             </Link>
           </div>
         </div>
@@ -318,11 +315,11 @@ export default function LandingPage() {
               <Shield size={12} color="#fff" />
             </div>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
-              HeatShield AI — SDG 13 Climate Action
+              HeatShield — SDG 13 Climate Action
             </span>
           </div>
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--text-light)' }}>
-            © {new Date().getFullYear()} HeatShield AI
+            © {new Date().getFullYear()} HeatShield
           </p>
         </div>
       </footer>

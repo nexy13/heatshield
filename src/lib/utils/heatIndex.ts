@@ -1,5 +1,5 @@
 // ============================================
-// HeatShield AI — Heat Index Calculator
+// HeatShield — Heat Index Calculator
 // Uses the Rothfusz regression equation (NWS standard)
 // ============================================
 

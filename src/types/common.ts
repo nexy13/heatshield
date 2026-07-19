@@ -1,5 +1,5 @@
 // ============================================
-// HeatShield AI — Common Types & Interfaces
+// HeatShield — Common Types & Interfaces
 // ============================================
 
 /** Navigation item for sidebar / navbar */

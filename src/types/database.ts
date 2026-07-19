@@ -1,9 +1,9 @@
 // ============================================
-// HeatShield AI — Database Types
+// HeatShield — Database Types
 // Matches supabase/migrations/001_initial_schema.sql
 // ============================================
 
-export type UserRole = 'worker' | 'supervisor' | 'admin' | 'ngo';
+export type UserRole = 'supervisor' | 'admin' | 'worker';
 export type SiteStatus = 'active' | 'inactive' | 'suspended';
 export type WorkerStatus = 'active' | 'inactive' | 'on_leave';
 export type ShiftStatus = 'active' | 'completed' | 'terminated';
@@ -41,14 +41,18 @@ export interface KilnSite {
   longitude: number;
   region: string | null;
   owner_id: string | null;
+  hydration_interval_min: number;
   status: SiteStatus;
   created_at: string;
 }
 
 export interface Worker {
   id: string;
-  user_id: string;
   site_id: string | null;
+  name: string;
+  phone: string | null;
+  address: string | null;
+  total_family_members: number;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
   blood_group: string | null;
@@ -118,7 +122,7 @@ export interface Alert {
 
 export interface SOSEvent {
   id: string;
-  worker_id: string;
+  worker_id: string | null;
   site_id: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -168,24 +172,22 @@ export interface ComplianceReport {
 // ---- Join / Display Types ----
 
 export interface WorkerWithUser extends Worker {
-  user: User;
 }
 
 export interface WorkerWithSite extends Worker {
-  user: User;
   site: KilnSite;
 }
 
 export interface AlertWithDetails extends Alert {
   site?: KilnSite;
-  worker?: WorkerWithUser;
+  worker?: Worker;
 }
 
 export interface SOSEventWithDetails extends SOSEvent {
-  worker?: WorkerWithUser;
+  worker?: Worker;
   site?: KilnSite;
 }
 
 export interface ShiftWithWorker extends Shift {
-  worker?: WorkerWithUser;
+  worker?: Worker;
 }

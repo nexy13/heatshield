@@ -53,6 +53,16 @@ export async function createSite(
   return data;
 }
 
+/** Delete a kiln site (admin). Cascades to workers, shifts, readings, alerts. */
+export async function deleteSite(siteId: string): Promise<void> {
+  const { error } = await supabase
+    .from('kiln_sites')
+    .delete()
+    .eq('id', siteId);
+
+  if (error) throw error;
+}
+
 /** Update a kiln site */
 export async function updateSite(
   siteId: string,

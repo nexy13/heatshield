@@ -1,5 +1,5 @@
 -- ============================================
--- HeatShield AI — Seed Data
+-- HeatShield — Seed Data
 -- Run this AFTER 001_initial_schema.sql
 -- ============================================
 

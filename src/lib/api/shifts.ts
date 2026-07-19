@@ -36,7 +36,7 @@ export async function getWorkerShifts(workerId: string, limit = 20): Promise<Shi
 export async function getSiteActiveShifts(siteId: string): Promise<ShiftWithWorker[]> {
   const { data, error } = await supabase
     .from('shifts')
-    .select('*, worker:workers(*, user:users(*))')
+    .select('*, worker:workers(*)')
     .eq('site_id', siteId)
     .eq('status', 'active')
     .order('start_time', { ascending: false });

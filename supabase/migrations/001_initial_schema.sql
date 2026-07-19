@@ -1,6 +1,7 @@
 -- ============================================
--- HeatShield AI — Full Database Schema
+-- HeatShield — Full Database Schema
 -- Paste this ENTIRE script into Supabase SQL Editor and click "Run"
+-- Safe to re-run: tables use IF NOT EXISTS, policies are dropped and recreated.
 -- ============================================
 
 -- 1. Enable UUID extension
@@ -12,15 +13,27 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 2. Users table (extends Supabase auth.users)
 CREATE TABLE IF NOT EXISTS public.users (
-  id UUID REFERENCES auth.users(id) PRIMARY KEY,
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
   phone TEXT,
-  role TEXT NOT NULL CHECK (role IN ('worker', 'supervisor', 'admin', 'ngo')),
+  role TEXT NOT NULL CHECK (role IN ('supervisor', 'admin')),
   language_pref TEXT DEFAULT 'hi',
   avatar_url TEXT,
+  site_id UUID,
+  age INT,
+  health_flags JSONB DEFAULT '[]',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Upgrade path: add columns if the table pre-exists without them
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS site_id UUID;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS age INT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS health_flags JSONB DEFAULT '[]';
+
+-- Upgrade path: only 'supervisor' and 'admin' can log in
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE public.users ADD CONSTRAINT users_role_check CHECK (role IN ('supervisor', 'admin'));
 
 -- 3. Kiln Sites table
 CREATE TABLE IF NOT EXISTS public.kiln_sites (
@@ -31,6 +44,7 @@ CREATE TABLE IF NOT EXISTS public.kiln_sites (
   longitude FLOAT NOT NULL,
   region TEXT,
   owner_id UUID REFERENCES public.users(id),
+  hydration_interval_min INT DEFAULT 30,
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -38,8 +52,11 @@ CREATE TABLE IF NOT EXISTS public.kiln_sites (
 -- 4. Workers table
 CREATE TABLE IF NOT EXISTS public.workers (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES public.users(id) UNIQUE,
-  site_id UUID REFERENCES public.kiln_sites(id),
+  site_id UUID REFERENCES public.kiln_sites(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  phone TEXT,
+  address TEXT,
+  total_family_members INT DEFAULT 0,
   emergency_contact_name TEXT,
   emergency_contact_phone TEXT,
   blood_group TEXT,
@@ -51,8 +68,8 @@ CREATE TABLE IF NOT EXISTS public.workers (
 -- 5. Supervisors table
 CREATE TABLE IF NOT EXISTS public.supervisors (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES public.users(id) UNIQUE,
-  site_id UUID REFERENCES public.kiln_sites(id),
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE UNIQUE,
+  site_id UUID REFERENCES public.kiln_sites(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -167,6 +184,39 @@ CREATE TABLE IF NOT EXISTS public.compliance_reports (
 );
 
 -- ============================================
+-- HELPER FUNCTIONS FOR RLS (SECURITY DEFINER)
+-- These bypass RLS internally, which prevents the
+-- "infinite recursion detected in policy" (42P17) error
+-- that occurs when a policy on public.users queries public.users.
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.users
+    WHERE id = (SELECT auth.uid()) AND role = 'admin'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.user_role()
+RETURNS TEXT
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = ''
+AS $$
+  SELECT role FROM public.users WHERE id = (SELECT auth.uid());
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.user_role() TO anon, authenticated;
+
+-- ============================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================
 
@@ -184,248 +234,185 @@ ALTER TABLE public.notifications_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.compliance_reports ENABLE ROW LEVEL SECURITY;
 
 -- ---- Users Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Users can read own profile" ON public.users
-    FOR SELECT USING (auth.uid() = id);
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Users can read own profile" ON public.users;
+DROP POLICY IF EXISTS "Admins can read all users" ON public.users;
+DROP POLICY IF EXISTS "Users can update themselves" ON public.users;
+DROP POLICY IF EXISTS "Users can insert themselves" ON public.users;
+DROP POLICY IF EXISTS "users_select_own_or_admin" ON public.users;
+DROP POLICY IF EXISTS "users_update_own_or_admin" ON public.users;
+DROP POLICY IF EXISTS "users_insert_self_or_admin" ON public.users;
+DROP POLICY IF EXISTS "users_delete_admin" ON public.users;
 
-DO $$ BEGIN
-  CREATE POLICY "Admins can read all users" ON public.users
-    FOR SELECT USING (
-      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "users_select_own_or_admin" ON public.users
+  FOR SELECT USING (auth.uid() = id OR public.is_admin());
 
-DO $$ BEGIN
-  CREATE POLICY "Users can update themselves" ON public.users
-    FOR UPDATE USING (auth.uid() = id);
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "users_update_own_or_admin" ON public.users
+  FOR UPDATE USING (auth.uid() = id OR public.is_admin());
 
-DO $$ BEGIN
-  CREATE POLICY "Users can insert themselves" ON public.users
-    FOR INSERT WITH CHECK (auth.uid() = id);
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "users_insert_self_or_admin" ON public.users
+  FOR INSERT WITH CHECK (auth.uid() = id OR public.is_admin());
+
+CREATE POLICY "users_delete_admin" ON public.users
+  FOR DELETE USING (public.is_admin());
 
 -- ---- Kiln Sites Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Authenticated users can read sites" ON public.kiln_sites
-    FOR SELECT USING (auth.role() = 'authenticated');
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Public read sites" ON public.kiln_sites;
+DROP POLICY IF EXISTS "Admins can manage sites" ON public.kiln_sites;
+DROP POLICY IF EXISTS "Supervisors can update own site" ON public.kiln_sites;
 
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage sites" ON public.kiln_sites
-    FOR ALL USING (
-      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Public read sites" ON public.kiln_sites
+  FOR SELECT USING (true);
+
+CREATE POLICY "Admins can manage sites" ON public.kiln_sites
+  FOR ALL USING (public.is_admin());
+
+-- Supervisors may edit their assigned site (e.g. hydration reminder interval)
+CREATE POLICY "Supervisors can update own site" ON public.kiln_sites
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.supervisors s
+      WHERE s.user_id = auth.uid() AND s.site_id = kiln_sites.id
+    )
+  );
 
 -- ---- Workers Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Workers can read own profile" ON public.workers
-    FOR SELECT USING (user_id = auth.uid());
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Public read workers" ON public.workers;
+DROP POLICY IF EXISTS "Supervisors manage site workers" ON public.workers;
+DROP POLICY IF EXISTS "Admins manage all workers" ON public.workers;
 
-DO $$ BEGIN
-  CREATE POLICY "Supervisors can read site workers" ON public.workers
-    FOR SELECT USING (
-      EXISTS (
-        SELECT 1 FROM public.supervisors s
-        WHERE s.user_id = auth.uid() AND s.site_id = workers.site_id
-      )
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Public read workers" ON public.workers
+  FOR SELECT USING (true);
 
-DO $$ BEGIN
-  CREATE POLICY "Admins can read all workers" ON public.workers
-    FOR SELECT USING (
-      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Supervisors manage site workers" ON public.workers
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.supervisors s
+      WHERE s.user_id = auth.uid() AND s.site_id = workers.site_id
+    )
+  );
+
+CREATE POLICY "Admins manage all workers" ON public.workers
+  FOR ALL USING (public.is_admin());
 
 -- ---- Supervisors Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Supervisors can read own record" ON public.supervisors
-    FOR SELECT USING (user_id = auth.uid());
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Supervisors can read own record" ON public.supervisors;
+DROP POLICY IF EXISTS "Supervisors can insert own record" ON public.supervisors;
+DROP POLICY IF EXISTS "Admins can manage supervisors" ON public.supervisors;
 
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage supervisors" ON public.supervisors
-    FOR ALL USING (
-      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Supervisors can read own record" ON public.supervisors
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY "Supervisors can insert own record" ON public.supervisors
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Admins can manage supervisors" ON public.supervisors
+  FOR ALL USING (public.is_admin());
 
 -- ---- Shifts Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Workers can read own shifts" ON public.shifts
-    FOR SELECT USING (
-      EXISTS (SELECT 1 FROM public.workers w WHERE w.id = worker_id AND w.user_id = auth.uid())
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Supervisors can manage site shifts" ON public.shifts;
+DROP POLICY IF EXISTS "Admins can manage all shifts" ON public.shifts;
 
-DO $$ BEGIN
-  CREATE POLICY "Supervisors can manage site shifts" ON public.shifts
-    FOR ALL USING (
-      EXISTS (
-        SELECT 1 FROM public.supervisors s
-        WHERE s.user_id = auth.uid() AND s.site_id = shifts.site_id
-      )
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Supervisors can manage site shifts" ON public.shifts
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.supervisors s
+      WHERE s.user_id = auth.uid() AND s.site_id = shifts.site_id
+    )
+  );
 
-DO $$ BEGIN
-  CREATE POLICY "Admins can manage all shifts" ON public.shifts
-    FOR ALL USING (
-      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Admins can manage all shifts" ON public.shifts
+  FOR ALL USING (public.is_admin());
 
 -- ---- Weather Readings Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Authenticated users can read weather" ON public.weather_readings
-    FOR SELECT USING (auth.role() = 'authenticated');
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Public read weather" ON public.weather_readings;
+
+CREATE POLICY "Public read weather" ON public.weather_readings
+  FOR SELECT USING (true);
 
 -- ---- Health Logs Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Workers can manage own health logs" ON public.health_logs
-    FOR ALL USING (
-      EXISTS (SELECT 1 FROM public.workers w WHERE w.id = worker_id AND w.user_id = auth.uid())
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Supervisors can manage site health logs" ON public.health_logs;
+DROP POLICY IF EXISTS "Admins can manage all health logs" ON public.health_logs;
 
-DO $$ BEGIN
-  CREATE POLICY "Supervisors can manage site health logs" ON public.health_logs
-    FOR ALL USING (
-      EXISTS (
-        SELECT 1 FROM public.workers w
-        JOIN public.supervisors s ON s.site_id = w.site_id
-        WHERE w.id = worker_id AND s.user_id = auth.uid()
-      )
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Supervisors can manage site health logs" ON public.health_logs
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.workers w
+      JOIN public.supervisors s ON s.site_id = w.site_id
+      WHERE w.id = worker_id AND s.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Admins can manage all health logs" ON public.health_logs
+  FOR ALL USING (public.is_admin());
 
 -- ---- Alerts Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Site members can read alerts" ON public.alerts
-    FOR SELECT USING (
-      EXISTS (
-        SELECT 1 FROM public.workers w WHERE w.user_id = auth.uid() AND w.site_id = alerts.site_id
-      ) OR EXISTS (
-        SELECT 1 FROM public.supervisors s WHERE s.user_id = auth.uid() AND s.site_id = alerts.site_id
-      ) OR EXISTS (
-        SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'
-      )
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Public read alerts" ON public.alerts;
+DROP POLICY IF EXISTS "Public insert alerts" ON public.alerts;
+DROP POLICY IF EXISTS "Supervisors and admins can update alerts" ON public.alerts;
 
-DO $$ BEGIN
-  CREATE POLICY "Supervisors and admins can manage alerts" ON public.alerts
-    FOR UPDATE USING (
-      EXISTS (
-        SELECT 1 FROM public.supervisors s WHERE s.user_id = auth.uid() AND s.site_id = alerts.site_id
-      ) OR EXISTS (
-        SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'
-      )
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Public read alerts" ON public.alerts
+  FOR SELECT USING (true);
+
+CREATE POLICY "Public insert alerts" ON public.alerts
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Supervisors and admins can update alerts" ON public.alerts
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.supervisors s WHERE s.user_id = auth.uid() AND s.site_id = alerts.site_id
+    ) OR public.is_admin()
+  );
 
 -- ---- SOS Events Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Workers can create own SOS" ON public.sos_events
-    FOR INSERT WITH CHECK (
-      EXISTS (SELECT 1 FROM public.workers w WHERE w.id = worker_id AND w.user_id = auth.uid())
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Public insert SOS events" ON public.sos_events;
+DROP POLICY IF EXISTS "Public read SOS events" ON public.sos_events;
+DROP POLICY IF EXISTS "Supervisors and admins can update SOS events" ON public.sos_events;
 
-DO $$ BEGIN
-  CREATE POLICY "Site members can read SOS events" ON public.sos_events
-    FOR SELECT USING (
-      EXISTS (
-        SELECT 1 FROM public.supervisors s WHERE s.user_id = auth.uid() AND s.site_id = sos_events.site_id
-      ) OR EXISTS (
-        SELECT 1 FROM public.workers w WHERE w.id = worker_id AND w.user_id = auth.uid()
-      ) OR EXISTS (
-        SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'
-      )
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Public insert SOS events" ON public.sos_events
+  FOR INSERT WITH CHECK (true);
 
-DO $$ BEGIN
-  CREATE POLICY "Supervisors can respond to SOS" ON public.sos_events
-    FOR UPDATE USING (
-      EXISTS (
-        SELECT 1 FROM public.supervisors s WHERE s.user_id = auth.uid() AND s.site_id = sos_events.site_id
-      ) OR EXISTS (
-        SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'
-      )
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Public read SOS events" ON public.sos_events
+  FOR SELECT USING (true);
+
+CREATE POLICY "Supervisors and admins can update SOS events" ON public.sos_events
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.supervisors s WHERE s.user_id = auth.uid() AND s.site_id = sos_events.site_id
+    ) OR public.is_admin()
+  );
 
 -- ---- Hydration Logs Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Workers can manage own hydration logs" ON public.hydration_logs
-    FOR ALL USING (
-      EXISTS (SELECT 1 FROM public.workers w WHERE w.id = worker_id AND w.user_id = auth.uid())
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Public select hydration logs" ON public.hydration_logs;
+DROP POLICY IF EXISTS "Public insert hydration logs" ON public.hydration_logs;
+DROP POLICY IF EXISTS "Supervisors can manage site hydration logs" ON public.hydration_logs;
 
-DO $$ BEGIN
-  CREATE POLICY "Supervisors can manage site hydration logs" ON public.hydration_logs
-    FOR ALL USING (
-      EXISTS (
-        SELECT 1 FROM public.workers w
-        JOIN public.supervisors s ON s.site_id = w.site_id
-        WHERE w.id = worker_id AND s.user_id = auth.uid()
-      )
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Public select hydration logs" ON public.hydration_logs
+  FOR SELECT USING (true);
+
+CREATE POLICY "Public insert hydration logs" ON public.hydration_logs
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Supervisors can manage site hydration logs" ON public.hydration_logs
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.workers w
+      JOIN public.supervisors s ON s.site_id = w.site_id
+      WHERE w.id = worker_id AND s.user_id = auth.uid()
+    )
+  );
 
 -- ---- Notifications Log Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Users can read own notifications" ON public.notifications_log
-    FOR SELECT USING (user_id = auth.uid());
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Users can read own notifications" ON public.notifications_log;
 
-DO $$ BEGIN
-  CREATE POLICY "Users can update own notifications" ON public.notifications_log
-    FOR UPDATE USING (user_id = auth.uid());
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Users can read own notifications" ON public.notifications_log
+  FOR SELECT USING (user_id = auth.uid());
 
 -- ---- Compliance Reports Policies ----
-DO $$ BEGIN
-  CREATE POLICY "Admins and NGO can read compliance reports" ON public.compliance_reports
-    FOR SELECT USING (
-      EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'ngo'))
-    );
-  EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+DROP POLICY IF EXISTS "Admins and NGO can read compliance reports" ON public.compliance_reports;
+DROP POLICY IF EXISTS "Admins can read compliance reports" ON public.compliance_reports;
+
+CREATE POLICY "Admins can read compliance reports" ON public.compliance_reports
+  FOR SELECT USING (public.is_admin());
 
 -- ============================================
 -- AUTH TRIGGER (auto-create profile on signup)
@@ -433,20 +420,29 @@ END $$;
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  meta_role TEXT;
 BEGIN
+  meta_role := COALESCE(NEW.raw_user_meta_data->>'role', 'supervisor');
+  -- Only roles the users.role CHECK constraint accepts; anything else
+  -- (e.g. legacy 'worker' accounts) falls back to 'supervisor'.
+  IF meta_role NOT IN ('supervisor', 'admin') THEN
+    meta_role := 'supervisor';
+  END IF;
+
   INSERT INTO public.users (id, name, email, phone, role, language_pref)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1), 'User'),
     COALESCE(NEW.email, NEW.id::text || '@guest.heatshield.app'),
     NEW.phone,
-    COALESCE(NEW.raw_user_meta_data->>'role', 'worker'),
+    meta_role,
     COALESCE(NEW.raw_user_meta_data->>'language_pref', 'hi')
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
@@ -498,6 +494,25 @@ BEGIN
   END IF;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
+
+-- ============================================
+-- REALTIME (best-effort; ignore if already added)
+-- ============================================
+
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.alerts;
+  EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.sos_events;
+  EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.weather_readings;
+  EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_object THEN NULL;
+END $$;
 
 -- ============================================
 -- DONE! All tables, policies, triggers & functions created.

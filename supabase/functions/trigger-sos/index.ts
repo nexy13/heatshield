@@ -12,10 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { worker_id, latitude, longitude, description } = await req.json();
+    const { worker_id, site_id, latitude, longitude, description } = await req.json();
 
-    if (!worker_id) {
-      throw new Error("worker_id is required");
+    if (!worker_id && !site_id) {
+      throw new Error("worker_id or site_id is required");
     }
 
     const supabaseClient = createClient(
@@ -23,24 +23,48 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get worker details
-    const { data: worker, error: workerError } = await supabaseClient
-      .from("workers")
-      .select("*, user:users(*), site:kiln_sites(*)")
-      .eq("id", worker_id)
-      .single();
+    let siteName = "Unknown Site";
+    let workerName = "Unidentified worker";
+    let emergencyContact = "";
+    let resolvedSiteId = site_id;
 
-    if (workerError || !worker) throw new Error("Worker not found");
+    if (worker_id) {
+      const { data: worker, error: workerError } = await supabaseClient
+        .from("workers")
+        .select("*, site:kiln_sites(*)")
+        .eq("id", worker_id)
+        .single();
+
+      if (!workerError && worker) {
+        workerName = worker.name;
+        emergencyContact = worker.emergency_contact_phone || "";
+        resolvedSiteId = worker.site_id;
+        if (worker.site) {
+          siteName = worker.site.name;
+        }
+      }
+    }
+
+    if (resolvedSiteId && siteName === "Unknown Site") {
+      const { data: site } = await supabaseClient
+        .from("kiln_sites")
+        .select("name")
+        .eq("id", resolvedSiteId)
+        .single();
+      if (site) {
+        siteName = site.name;
+      }
+    }
 
     // Insert SOS Event
     const { data: sosEvent, error: sosError } = await supabaseClient
       .from("sos_events")
       .insert({
-        worker_id,
-        site_id: worker.site_id,
-        latitude,
-        longitude,
-        description,
+        worker_id: worker_id || null,
+        site_id: resolvedSiteId,
+        latitude: latitude ?? null,
+        longitude: longitude ?? null,
+        description: description ?? null,
         status: "triggered",
       })
       .select()
@@ -50,38 +74,41 @@ serve(async (req) => {
 
     // Create system alert
     await supabaseClient.from("alerts").insert({
-      site_id: worker.site_id,
-      worker_id: worker.id,
+      site_id: resolvedSiteId,
+      worker_id: worker_id || null,
       alert_type: "sos",
       severity: "emergency",
-      message: `🚨 SOS triggered by ${worker.user.name}${description ? ': ' + description : ''}`,
+      message: `🚨 SOS triggered by ${workerName} at ${siteName}${description ? ': ' + description : ''}`,
       status: "active",
     });
 
     // Trigger n8n webhook for SMS routing
     const n8nWebhookUrl = Deno.env.get("N8N_WEBHOOK_URL_SOS");
     if (n8nWebhookUrl) {
-      // Find site supervisor
+      // Find supervisor of this site
       const { data: supervisor } = await supabaseClient
-        .from("users")
-        .select("id, phone")
-        .eq("role", "supervisor")
-        .limit(1) // Ideally filtered by site_id, but simplified for MVP
-        .single();
+        .from("supervisors")
+        .select("user_id, user:users(id, phone)")
+        .eq("site_id", resolvedSiteId)
+        .limit(1)
+        .maybeSingle();
+
+      const supervisorPhone = (supervisor?.user as any)?.phone ?? "";
+      const supervisorUserId = supervisor?.user_id ?? "";
 
       await fetch(n8nWebhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sos_id: sosEvent.id,
-          worker_name: worker.user.name,
-          site_name: worker.site.name,
+          worker_name: workerName,
+          site_name: siteName,
           latitude,
           longitude,
           triggered_at: sosEvent.triggered_at,
-          supervisor_phone: supervisor?.phone ?? "",
-          supervisor_user_id: supervisor?.id ?? "",
-          emergency_contact_phone: worker.emergency_contact_phone,
+          supervisor_phone: supervisorPhone,
+          supervisor_user_id: supervisorUserId,
+          emergency_contact_phone: emergencyContact,
         }),
       }).catch(console.error);
     }

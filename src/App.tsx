@@ -8,9 +8,8 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 // Pages
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import WorkerDashboard from '@/pages/WorkerDashboard';
-import SOSPage from '@/pages/SOSPage';
+import ResetPasswordPage from '@/pages/ResetPasswordPage';
+import KioskPage from '@/pages/KioskPage';
 import SupervisorDashboard from '@/pages/SupervisorDashboard';
 import WorkerGridPage from '@/pages/WorkerGridPage';
 import SOSResponsePage from '@/pages/SOSResponsePage';
@@ -22,9 +21,6 @@ import AnalyticsPage from '@/pages/AnalyticsPage';
 import SystemAlertsPage from '@/pages/SystemAlertsPage';
 import ShiftSchedulerPage from '@/pages/ShiftSchedulerPage';
 import SettingsPage from '@/pages/SettingsPage';
-import WorkerShiftsPage from '@/pages/WorkerShiftsPage';
-import HealthLogPage from '@/pages/HealthLogPage';
-import HydrationLogPage from '@/pages/HydrationLogPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 
 /** Layout with sidebar for authenticated pages */
@@ -43,15 +39,17 @@ function AppRoutes() {
   const location = useLocation();
 
   // Public pages don't have sidebar
-  const publicPaths = ['/', '/login', '/register'];
-  const isPublic = publicPaths.includes(location.pathname);
+  const publicPaths = ['/', '/login', '/reset-password'];
+  const isKiosk = location.pathname.startsWith('/kiosk/');
+  const isPublic = publicPaths.includes(location.pathname) || isKiosk;
 
   if (isPublic) {
     return (
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/kiosk/:siteId" element={<KioskPage />} />
       </Routes>
     );
   }
@@ -59,56 +57,6 @@ function AppRoutes() {
   return (
     <DashboardLayout>
       <Routes>
-        {/* Worker Routes */}
-        <Route
-          path="/worker"
-          element={
-            <ProtectedRoute allowedRoles={['worker', 'supervisor', 'admin']}>
-              <WorkerDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['worker']}>
-              <WorkerDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/worker/sos"
-          element={
-            <ProtectedRoute allowedRoles={['worker', 'supervisor']}>
-              <SOSPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/worker/shifts"
-          element={
-            <ProtectedRoute allowedRoles={['worker', 'supervisor', 'admin']}>
-              <WorkerShiftsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/worker/health"
-          element={
-            <ProtectedRoute allowedRoles={['worker', 'supervisor', 'admin']}>
-              <HealthLogPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/worker/hydration"
-          element={
-            <ProtectedRoute allowedRoles={['worker', 'supervisor', 'admin']}>
-              <HydrationLogPage />
-            </ProtectedRoute>
-          }
-        />
-
         {/* Supervisor Routes */}
         <Route
           path="/supervisor"
@@ -187,7 +135,7 @@ function AppRoutes() {
         <Route
           path="/admin/compliance"
           element={
-            <ProtectedRoute allowedRoles={['admin', 'ngo']}>
+            <ProtectedRoute allowedRoles={['admin']}>
               <ComplianceReportsPage />
             </ProtectedRoute>
           }
@@ -195,7 +143,7 @@ function AppRoutes() {
         <Route
           path="/admin/analytics"
           element={
-            <ProtectedRoute allowedRoles={['admin', 'ngo']}>
+            <ProtectedRoute allowedRoles={['admin']}>
               <AnalyticsPage />
             </ProtectedRoute>
           }

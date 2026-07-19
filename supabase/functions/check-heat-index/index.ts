@@ -21,7 +21,7 @@ serve(async (req) => {
     // Fetch active kiln sites
     const { data: sites, error: sitesError } = await supabaseClient
       .from("kiln_sites")
-      .select("id, name, location_lat, location_lng")
+      .select("id, name, latitude, longitude")
       .eq("status", "active");
 
     if (sitesError) throw sitesError;
@@ -30,7 +30,7 @@ serve(async (req) => {
 
     // For each site, calculate heat index (demo values for now, would connect to weather API like OpenWeather)
     for (const site of sites) {
-      if (!site.location_lat || !site.location_lng) continue;
+      if (!site.latitude || !site.longitude) continue;
 
       // Mock weather data based on current conditions in typical kiln regions (summer)
       const baseTemp = 40 + Math.random() * 5; // 40-45C

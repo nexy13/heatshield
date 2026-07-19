@@ -1,4 +1,4 @@
-# HeatShield AI
+# HeatShield
 
 > **SDG 13: Climate Action** — Protecting brick kiln workers from heat-related illness through real-time monitoring, AI-driven alerts, and emergency response.
 

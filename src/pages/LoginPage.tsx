@@ -1,15 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Shield, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
-  const { signInWithEmail } = useAuth();
+  const { signInWithEmail, resetPassword, authUser, role } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Type your email address above first, then click "Forgot Password?".');
+      return;
+    }
+    try {
+      setSendingReset(true);
+      setError(null);
+      setNotice(null);
+      await resetPassword(email);
+      setNotice(`Password reset link sent to ${email}. Check your inbox (and spam folder).`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send reset email');
+    } finally {
+      setSendingReset(false);
+    }
+  };
+
+  useEffect(() => {
+    if (authUser && role) {
+      const roleRedirects: Record<string, string> = {
+        supervisor: '/supervisor',
+        admin: '/admin',
+      };
+      navigate(roleRedirects[role] ?? '/supervisor');
+    }
+  }, [authUser, role, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,8 +48,18 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await signInWithEmail(email, password);
-      navigate('/worker');
+      const profile = await signInWithEmail(email, password);
+      if (profile) {
+        const roleRedirects: Record<string, string> = {
+          supervisor: '/supervisor',
+          admin: '/admin',
+        };
+        navigate(roleRedirects[profile.role] ?? '/supervisor');
+      } else {
+        setError(
+          'Signed in, but no profile was found for this account. Please contact your administrator.'
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign in failed');
     } finally {
@@ -86,7 +127,7 @@ export default function LoginPage() {
               <Shield size={12} color="#fff" />
             </div>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.06em', color: 'var(--text)' }}>
-              HEATSHIELD AI
+              HEATSHIELD
             </span>
           </Link>
         </div>
@@ -145,14 +186,33 @@ export default function LoginPage() {
             <div style={{ position: 'relative' }}>
               <Lock size={14} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
                 className="input-field"
-                style={{ paddingLeft: '2.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.7)', borderColor: 'rgba(27, 77, 62, 0.15)' }}
+                style={{ paddingLeft: '2.5rem', paddingRight: '2.75rem', borderRadius: '4px', background: 'rgba(255,255,255,0.7)', borderColor: 'rgba(27, 77, 62, 0.15)' }}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: '0.625rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0.25rem',
+                  display: 'flex',
+                  color: 'var(--text-muted)',
+                }}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
@@ -165,14 +225,26 @@ export default function LoginPage() {
               />
               <span>Remember me</span>
             </label>
-            <Link
-              to="#"
-              style={{ color: 'var(--accent-teal)', textDecoration: 'none', fontWeight: 500, transition: 'opacity 0.2s' }}
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={sendingReset}
+              style={{
+                color: 'var(--accent-teal)',
+                background: 'none',
+                border: 'none',
+                cursor: sendingReset ? 'wait' : 'pointer',
+                fontWeight: 500,
+                fontSize: '0.8125rem',
+                fontFamily: 'var(--font-sans)',
+                padding: 0,
+                transition: 'opacity 0.2s',
+              }}
               onMouseEnter={e => { (e.target as HTMLElement).style.opacity = '0.8'; }}
               onMouseLeave={e => { (e.target as HTMLElement).style.opacity = '1'; }}
             >
-              Forgot Password?
-            </Link>
+              {sendingReset ? 'Sending…' : 'Forgot Password?'}
+            </button>
           </div>
 
           {error && (
@@ -186,6 +258,20 @@ export default function LoginPage() {
               color: '#B91C1C',
             }}>
               {error}
+            </div>
+          )}
+
+          {notice && (
+            <div style={{
+              padding: '0.75rem 1rem',
+              borderRadius: '4px',
+              background: 'rgba(45, 122, 101, 0.08)',
+              border: '1px solid rgba(45, 122, 101, 0.25)',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '0.8125rem',
+              color: 'var(--accent)',
+            }}>
+              {notice}
             </div>
           )}
 
@@ -219,20 +305,8 @@ export default function LoginPage() {
           color: 'var(--text-muted)',
           marginTop: '2rem',
           textAlign: 'center',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '0.375rem',
         }}>
-          <span>Don't have an account?</span>
-          <Link
-            to="/register"
-            className="hero-cta-link"
-            style={{ fontWeight: 500 }}
-          >
-            <span>Sign up</span>
-            <ArrowRight size={14} />
-          </Link>
+          Accounts are created by your administrator.
         </p>
       </div>
     </div>

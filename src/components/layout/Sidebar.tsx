@@ -10,8 +10,6 @@ import {
   Settings,
   FileText,
   Siren,
-  Droplets,
-  Heart,
   CalendarClock,
   LogOut,
   Menu,
@@ -21,17 +19,8 @@ import { useState } from 'react';
 import { ROLE_LABELS } from '@/lib/utils/constants';
 import type { NavItem } from '@/types/common';
 
-const workerLinks: NavItem[] = [
-  { label: 'Dashboard', to: '/worker', icon: LayoutDashboard },
-  { label: 'SOS Emergency', to: '/worker/sos', icon: Siren },
-  { label: 'My Shifts', to: '/worker/shifts', icon: CalendarClock },
-  { label: 'Health Log', to: '/worker/health', icon: Heart },
-  { label: 'Hydration', to: '/worker/hydration', icon: Droplets },
-];
-
 const supervisorLinks: NavItem[] = [
   { label: 'Dashboard', to: '/supervisor', icon: LayoutDashboard },
-  { label: 'Workers', to: '/supervisor/workers', icon: Users },
   { label: 'Alerts', to: '/supervisor/alerts', icon: AlertTriangle },
   { label: 'Shifts', to: '/supervisor/shifts', icon: CalendarClock },
   { label: 'SOS Events', to: '/supervisor/sos', icon: Siren },
@@ -48,13 +37,8 @@ const adminLinks: NavItem[] = [
 ];
 
 const linksMap: Record<string, NavItem[]> = {
-  worker: workerLinks,
   supervisor: supervisorLinks,
   admin: adminLinks,
-  ngo: [
-    { label: 'Compliance', to: '/admin/compliance', icon: FileText },
-    { label: 'Analytics', to: '/admin/analytics', icon: BarChart3 },
-  ],
 };
 
 export default function Sidebar() {
@@ -71,7 +55,7 @@ export default function Sidebar() {
           <Shield size={14} className="text-white" />
         </div>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 500, letterSpacing: '0.05em', color: 'var(--text)' }}>HEATSHIELD AI</h1>
+          <h1 style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8125rem', fontWeight: 500, letterSpacing: '0.05em', color: 'var(--text)' }}>HEATSHIELD</h1>
           <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 1 }}>Safety Platform</p>
         </div>
       </div>

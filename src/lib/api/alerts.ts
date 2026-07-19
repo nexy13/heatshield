@@ -9,7 +9,7 @@ export async function getSiteAlerts(
 ): Promise<AlertWithDetails[]> {
   let query = supabase
     .from('alerts')
-    .select('*, site:kiln_sites(*), worker:workers(*, user:users(*))')
+    .select('*, site:kiln_sites(*), worker:workers(*)')
     .eq('site_id', siteId)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -27,7 +27,7 @@ export async function getSiteAlerts(
 export async function getAllAlerts(limit = 100): Promise<AlertWithDetails[]> {
   const { data, error } = await supabase
     .from('alerts')
-    .select('*, site:kiln_sites(*), worker:workers(*, user:users(*))')
+    .select('*, site:kiln_sites(*), worker:workers(*)')
     .order('created_at', { ascending: false })
     .limit(limit);
 

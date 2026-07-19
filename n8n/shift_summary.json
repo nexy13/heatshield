@@ -12,7 +12,7 @@
     },
     {
       "parameters": {
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/shifts?status=eq.completed&start_time=gte.{{$today.toISO()}}&select=*,worker:workers(*,user:users(*))",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/shifts?status=eq.completed&start_time=gte.{{$today.toISO()}}&select=*,worker:workers(*)",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {

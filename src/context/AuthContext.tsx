@@ -15,13 +15,11 @@ interface AuthContextType {
   /** Loading state */
   loading: boolean;
   /** Sign in with email and password */
-  signInWithEmail: (email: string, password: string) => Promise<void>;
-  /** Sign up with email, password, and metadata */
-  signUp: (
-    email: string,
-    password: string,
-    metadata: { name: string; role: UserRole; site_id?: string | null; age?: number | null; phone?: string | null }
-  ) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<User | null>;
+  /** Send a password-reset email with a link to /reset-password */
+  resetPassword: (email: string) => Promise<void>;
+  /** Set a new password (requires an active session, e.g. from a recovery link) */
+  updatePassword: (newPassword: string) => Promise<void>;
   /** Sign out */
   signOut: () => Promise<void>;
 }
@@ -34,117 +32,111 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user profile from public.profiles
-  const fetchProfile = async (userId: string, email?: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
+  // Fetch user profile from public.users
+  const fetchProfile = async (userId: string) => {
+    const { data: user, error } = await supabase
+      .from('users')
       .select('*')
       .eq('id', userId)
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
-        console.log('Profile missing. Re-creating default profile...');
-        const { data: sites } = await supabase.from('sites').select('id').limit(1);
-        const defaultSiteId = sites && sites.length > 0 ? sites[0].id : null;
-
-        const defaultProfile = {
-          id: userId,
-          name: email ? email.split('@')[0] : 'User',
-          role: email && (email.includes('admin') || email.includes('supervisor')) ? 'admin' : 'worker',
-          site_id: defaultSiteId,
-          age: 30,
-          phone: null,
-          health_flags: [],
-        };
-
-        const { data: newProfile, error: insertErr } = await supabase
-          .from('profiles')
-          .insert(defaultProfile)
-          .select()
-          .single();
-
-        if (!insertErr && newProfile) {
-          return newProfile as any;
-        } else {
-          console.error('Failed to auto-create profile:', insertErr?.message);
-        }
-      }
       console.error('Error fetching profile:', error.message);
       return null;
     }
-    return data as any;
+
+    if (user && user.role === 'supervisor') {
+      // Fetch site_id from supervisors table
+      const { data: supervisor } = await supabase
+        .from('supervisors')
+        .select('site_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      return {
+        ...user,
+        site_id: supervisor?.site_id ?? null,
+      };
+    }
+
+    return user;
   };
 
   useEffect(() => {
+    let mounted = true;
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (!mounted) return;
       setSession(s);
       setAuthUser(s?.user ?? null);
-      if (s?.user) {
-        fetchProfile(s.user.id, s.user.email).then((p) => {
-          setProfile(p);
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
+      if (!s?.user) setLoading(false);
     });
-    // Listen for auth changes
+
+    // Listen for auth changes. IMPORTANT: no awaited supabase queries inside
+    // this callback — supabase-js holds its auth lock while notifying
+    // subscribers, and a query here (which needs that lock) can deadlock.
+    // Profile fetching happens in the effect below, keyed on the user id.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, s) => {
+      (_event, s) => {
         setSession(s);
         setAuthUser(s?.user ?? null);
-        if (s?.user) {
-          setLoading(true);
-          const p = await fetchProfile(s.user.id, s.user.email);
-          setProfile(p);
-          setLoading(false);
-        } else {
+        if (!s?.user) {
           setProfile(null);
           setLoading(false);
         }
       }
     );
-    return () => subscription.unsubscribe();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
+  // Fetch the profile whenever the signed-in user changes
+  const userId = authUser?.id ?? null;
+  const profileId = profile?.id ?? null;
+  useEffect(() => {
+    if (!userId) return;
+    if (profileId === userId) {
+      // Already have this user's profile (e.g. set by signInWithEmail)
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    fetchProfile(userId).then((p) => {
+      if (cancelled) return;
+      setProfile(p);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, profileId]);
+
   const signInWithEmail = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    if (data.user) {
+      const p = await fetchProfile(data.user.id);
+      setProfile(p);
+      return p;
+    }
+    return null;
+  };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
     if (error) throw error;
   };
 
-  const signUp = async (
-    email: string,
-    password: string,
-    metadata: { name: string; role: UserRole; site_id?: string | null; age?: number | null; phone?: string | null }
-  ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name: metadata.name,
-          role: metadata.role,
-        },
-      },
-    });
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
-
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          name: metadata.name,
-          role: metadata.role,
-          site_id: metadata.site_id || null,
-          age: metadata.age || null,
-          phone: metadata.phone || null,
-          health_flags: [],
-        });
-      if (profileError) throw profileError;
-    }
   };
 
   const signOut = async () => {
@@ -164,7 +156,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         signInWithEmail,
-        signUp,
+        resetPassword,
+        updatePassword,
         signOut,
       }}
     >

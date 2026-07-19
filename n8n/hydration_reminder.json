@@ -14,7 +14,7 @@
     },
     {
       "parameters": {
-        "url": "={{$env.SUPABASE_URL}}/rest/v1/shifts?status=eq.active&select=*,worker:workers(*,user:users(*))",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/shifts?status=eq.active&select=*,worker:workers(*)",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {

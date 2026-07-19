@@ -1,4 +1,7 @@
 import { Shield, FileText, Download } from 'lucide-react';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 
 const mockReports = [
   { id: '1', site: 'Rajput Brick Works', date: '2026-07-15', grade: 'B', workers: 24, issues: 2 },
@@ -11,33 +14,33 @@ export default function ComplianceReportsPage() {
     <div className="space-y-6 animate-fade-up">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-1">Compliance Reports</h2>
-          <p className="text-[var(--color-text-muted)] text-sm">Automated safety & NGO compliance logs</p>
+          <h2 className="text-2xl font-bold mb-1 text-left">Compliance Reports</h2>
+          <p className="text-[var(--color-text-muted)] text-sm text-left">Automated safety & NGO compliance logs</p>
         </div>
-        <button className="btn-primary py-2 px-4 rounded-lg flex items-center gap-2 text-sm">
+        <Button variant="primary" className="py-2.5 px-4 rounded-xl flex items-center gap-2">
           <Download size={16} /> Export All (CSV)
-        </button>
+        </Button>
       </div>
 
-      <div className="glass rounded-2xl overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-[var(--color-bg-secondary)]">
-              <th className="p-4 text-sm font-semibold text-[var(--color-text-muted)]">Date</th>
-              <th className="p-4 text-sm font-semibold text-[var(--color-text-muted)]">Site Name</th>
-              <th className="p-4 text-sm font-semibold text-[var(--color-text-muted)]">Workers</th>
-              <th className="p-4 text-sm font-semibold text-[var(--color-text-muted)]">Safety Grade</th>
-              <th className="p-4 text-sm font-semibold text-[var(--color-text-muted)]">Violations</th>
-              <th className="p-4 text-sm font-semibold text-[var(--color-text-muted)]">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--color-border)]">
+      <Card className="overflow-hidden p-0" hoverable={false}>
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-[var(--color-bg-secondary)] hover:bg-transparent">
+              <TableHead>Date</TableHead>
+              <TableHead>Site Name</TableHead>
+              <TableHead>Workers</TableHead>
+              <TableHead>Safety Grade</TableHead>
+              <TableHead>Violations</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {mockReports.map((report) => (
-              <tr key={report.id} className="hover:bg-[var(--color-bg-secondary)]/50 transition-colors">
-                <td className="p-4 text-sm">{report.date}</td>
-                <td className="p-4 font-medium">{report.site}</td>
-                <td className="p-4 text-sm">{report.workers}</td>
-                <td className="p-4">
+              <TableRow key={report.id}>
+                <TableCell className="text-[var(--color-text-muted)]">{report.date}</TableCell>
+                <TableCell className="font-semibold text-left">{report.site}</TableCell>
+                <TableCell>{report.workers}</TableCell>
+                <TableCell>
                   <span className={`badge ${
                     report.grade === 'A' ? 'badge-success' :
                     report.grade === 'B' ? 'badge-info' :
@@ -45,8 +48,8 @@ export default function ComplianceReportsPage() {
                   }`}>
                     Grade {report.grade}
                   </span>
-                </td>
-                <td className="p-4">
+                </TableCell>
+                <TableCell>
                   {report.issues > 0 ? (
                     <span className="text-indigo-400 font-medium flex items-center gap-1">
                       {report.issues} Issues
@@ -56,17 +59,17 @@ export default function ComplianceReportsPage() {
                       <Shield size={14} /> Clear
                     </span>
                   )}
-                </td>
-                <td className="p-4">
-                  <button className="text-sm font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                </TableCell>
+                <TableCell>
+                  <button className="text-sm font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer">
                     <FileText size={14} /> View
                   </button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

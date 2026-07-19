@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ============================================
-   HeatShield AI — Minimal Editorial Design
+   HeatShield — Minimal Editorial Design
    Light · Airy · Spacious · Teal accent
    Inspired by: editorial / luxury SaaS
    ============================================ */
@@ -24,12 +24,12 @@
   --text-muted: #8C8C82;
   --text-light: #B8B8B0;
 
-  /* Accent — deep teal */
-  --accent: #1B4D3E;
-  --accent-hover: #163D31;
-  --accent-light: #E8F0EE;
-  --accent-teal: #2D7A65;
-  --accent-teal-light: rgba(45, 122, 101, 0.08);
+  /* Accent — Neutral slate-gray */
+  --accent: #1E293B;
+  --accent-hover: #0F172A;
+  --accent-light: #F1F5F9;
+  --accent-teal: #475569;
+  --accent-teal-light: rgba(71, 85, 105, 0.08);
 
   /* Borders */
   --border: #E5E2DC;
