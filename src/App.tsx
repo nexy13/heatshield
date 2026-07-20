@@ -28,7 +28,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--bg)' }}>
       <Sidebar />
-      <main className="flex-1 lg:ml-0 p-6 pt-16 lg:pt-8 max-w-5xl mx-auto w-full relative">
+      <main className="flex-1 lg:ml-0 px-6 lg:px-10 pb-12 pt-16 lg:pt-9 max-w-6xl mx-auto w-full relative">
         {children}
       </main>
     </div>

@@ -28,11 +28,11 @@ describe('WorkerIntakeForm Validation Logic', () => {
 
   test('incorrect phone format triggers validation errors', () => {
     const invalidPhones = {
-      name: 'Rohan Sharma',
+      name: 'Rohan Gowda',
       phone: '12345', // too short
-      address: 'Kiln Site Sector A',
+      address: 'Anekal Kiln Colony, Bengaluru',
       total_family_members: '3',
-      emergency_contact_name: 'Sita Sharma',
+      emergency_contact_name: 'Sita Gowda',
       emergency_contact_phone: 'abcdefghijk', // invalid chars
       blood_group: 'B+',
       medical_conditions: [],
@@ -49,11 +49,11 @@ describe('WorkerIntakeForm Validation Logic', () => {
 
   test('negative/non-integer family counts trigger validation errors', () => {
     const negativeFamily = {
-      name: 'Rohan Sharma',
+      name: 'Rohan Gowda',
       phone: '9876543210',
-      address: 'Kiln Site Sector A',
+      address: 'Anekal Kiln Colony, Bengaluru',
       total_family_members: '-2', // negative
-      emergency_contact_name: 'Sita Sharma',
+      emergency_contact_name: 'Sita Gowda',
       emergency_contact_phone: '9876543211',
       blood_group: 'B+',
       medical_conditions: [],
@@ -74,11 +74,11 @@ describe('WorkerIntakeForm Validation Logic', () => {
 
   test('valid data passes all validations', () => {
     const validData = {
-      name: 'Rohan Sharma',
+      name: 'Rohan Gowda',
       phone: '+919876543210',
-      address: 'Kiln Site Sector A',
+      address: 'Anekal Kiln Colony, Bengaluru',
       total_family_members: '0', // 0 is non-negative
-      emergency_contact_name: 'Sita Sharma',
+      emergency_contact_name: 'Sita Gowda',
       emergency_contact_phone: '9876543211',
       blood_group: 'O-',
       medical_conditions: ['Asthma'],

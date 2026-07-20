@@ -7,8 +7,12 @@ import {
   MapPin,
   ArrowUpRight,
   CheckCircle2,
+  ShieldCheck,
+  Droplets,
+  UserRound,
 } from 'lucide-react';
 import { useAlerts } from '@/context/AlertContext';
+import { useAuth } from '@/context/AuthContext';
 import { getActiveSites } from '@/lib/api/sites';
 import { getAllAlerts } from '@/lib/api/alerts';
 import { getAllSitesLatestWeather } from '@/lib/api/weather';
@@ -18,6 +22,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import Spinner from '@/components/ui/Spinner';
+import StatsGrid from '@/components/dashboard/StatsGrid';
 
 interface SiteStatusRow {
   site: KilnSite;
@@ -26,23 +31,24 @@ interface SiteStatusRow {
   supervisorName: string;
 }
 
-const RISK_BADGES: Record<string, { label: string; bg: string; text: string }> = {
-  low: { label: 'Low', bg: 'bg-emerald-500/10', text: 'text-emerald-500' },
-  moderate: { label: 'Moderate', bg: 'bg-yellow-500/12', text: 'text-amber-600' },
-  high: { label: 'High', bg: 'bg-amber-500/14', text: 'text-amber-700' },
-  extreme: { label: 'Extreme', bg: 'bg-red-500/10', text: 'text-red-500' },
-  danger: { label: 'Danger', bg: 'bg-red-600', text: 'text-white' },
+const RISK_BADGES: Record<string, { label: string; className: string }> = {
+  low: { label: 'Safe', className: 'badge-success' },
+  moderate: { label: 'Caution', className: 'badge-warning' },
+  high: { label: 'High Risk', className: 'badge-orange' },
+  extreme: { label: 'Extreme', className: 'badge-danger' },
+  danger: { label: 'Danger', className: 'badge-danger badge-live' },
 };
 
 const SEVERITY_BADGE: Record<string, string> = {
-  emergency: 'badge-danger',
-  critical: 'badge-warning',
+  emergency: 'badge-danger badge-live',
+  critical: 'badge-orange',
   warning: 'badge-warning',
   info: 'badge-info',
 };
 
 export default function AdminDashboard() {
   const { addToast } = useAlerts();
+  const { profile } = useAuth();
   const [siteStatuses, setSiteStatuses] = useState<SiteStatusRow[]>([]);
   const [alerts, setAlerts] = useState<AlertWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,10 +128,10 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <Card className="p-10 text-center max-w-md mx-auto mt-16 border-red-500/20 bg-red-500/5" hoverable={false}>
-        <AlertOctagon size={32} className="mx-auto mb-4 text-red-500" />
-        <h3 className="font-serif text-xl mb-2">Connection Error</h3>
-        <p className="text-sm text-[var(--color-text-muted)]">{error}</p>
+      <Card className="p-10 text-center max-w-md mx-auto mt-16" hoverable={false} style={{ borderColor: 'rgba(220,38,38,0.25)', background: 'var(--emergency-bg)' }}>
+        <AlertOctagon size={32} className="mx-auto mb-4" style={{ color: 'var(--emergency)' }} />
+        <h3 className="font-serif text-xl font-bold mb-2">Connection Error</h3>
+        <p className="text-sm text-[var(--text-muted)]">{error}</p>
       </Card>
     );
   }
@@ -135,51 +141,67 @@ export default function AdminDashboard() {
   const activeAlertsCount = activeAlertsList.length;
   const activeSOSCount = activeAlertsList.filter(a => a.alert_type === 'sos').length;
 
-  const metrics = [
-    { label: 'Total workers', value: totalWorkers, icon: Users, color: 'text-[var(--text)]' },
-    { label: 'Active mills', value: siteStatuses.length, icon: MapPin, color: 'text-[var(--text)]' },
-    { label: 'Active warnings', value: activeAlertsCount, icon: AlertOctagon, color: activeAlertsCount > 0 ? 'text-amber-600 font-semibold' : 'text-[var(--text)]' },
-    { label: 'SOS active', value: activeSOSCount, icon: ShieldAlert, color: activeSOSCount > 0 ? 'text-red-500 font-bold' : 'text-[var(--text)]' },
-  ];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+  const adminName = profile?.name || 'System Admin';
 
   return (
-    <div className="space-y-10 animate-fade-up">
+    <div className="space-y-8 animate-fade-up">
       {/* ── HEADER ── */}
-      <div>
-        <p className="section-label mb-2 text-left">Administration</p>
-        <h2 className="font-serif text-3xl font-normal tracking-tight text-[var(--text)] text-left leading-tight">
-          System Health Overview
-        </h2>
-        <p className="text-sm text-[var(--color-text-muted)] mt-1 text-left">
-          Live status across every mill on the platform
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="text-left">
+          <p className="eyebrow mb-1.5 flex items-center gap-2">
+            <span className="pulse-dot" style={{ background: 'var(--safe)' }} />
+            Live · Administration
+          </p>
+          <h2 className="page-title">{greeting}, {adminName}</h2>
+          <p className="page-subtitle">Today's Operations Overview — real-time status across every kiln site</p>
+        </div>
+        <p className="text-xs font-semibold text-[var(--text-muted)] tracking-wide shrink-0">
+          {new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       </div>
 
       {/* ── METRICS ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map(({ label, value, icon: Icon, color }) => (
-          <Card key={label} className="p-5 flex flex-col justify-between" hoverable={false}>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-text-muted)]">
-                {label}
-              </span>
-              <Icon size={16} className={color} />
-            </div>
-            <p className={`font-serif text-4xl text-left font-normal tracking-tight ${color}`}>
-              {value}
-            </p>
-          </Card>
-        ))}
-      </div>
+      <StatsGrid
+        stats={[
+          {
+            label: 'Total workers',
+            value: totalWorkers,
+            icon: Users,
+            color: '#2563EB',
+            spark: [totalWorkers * 0.7, totalWorkers * 0.75, totalWorkers * 0.85, totalWorkers * 0.8, totalWorkers * 0.92, totalWorkers || 1],
+          },
+          {
+            label: 'Active sites',
+            value: siteStatuses.length,
+            icon: MapPin,
+            color: '#16A34A',
+            spark: [1, 2, 2, siteStatuses.length * 0.7 || 1, siteStatuses.length * 0.9 || 1, siteStatuses.length || 1],
+          },
+          {
+            label: 'Active warnings',
+            value: activeAlertsCount,
+            icon: AlertOctagon,
+            color: activeAlertsCount > 0 ? '#EA580C' : '#64748B',
+          },
+          {
+            label: 'SOS active',
+            value: activeSOSCount,
+            icon: ShieldAlert,
+            color: activeSOSCount > 0 ? '#DC2626' : '#64748B',
+          },
+        ]}
+      />
 
-      {/* ── MILL SITES ── */}
+      {/* ── KILN SITES ── */}
       <div className="space-y-4">
         <div className="flex items-end justify-between">
           <div className="text-left">
-            <h3 className="font-serif text-xl font-normal text-[var(--text)]">Mill sites</h3>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Roster, hydration cadence, and live heat index per mill</p>
+            <h3 className="font-serif text-lg font-bold text-[var(--text)]">Kiln sites</h3>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">Roster, hydration cadence, and live heat index per site</p>
           </div>
-          <Link to="/admin/sites" className="hero-cta-link text-xs">
+          <Link to="/admin/sites" className="hero-cta-link text-xs font-semibold">
             Manage sites <ArrowUpRight size={14} />
           </Link>
         </div>
@@ -187,7 +209,7 @@ export default function AdminDashboard() {
         <Card className="overflow-hidden p-0" hoverable={false}>
           <Table>
             <TableHeader>
-              <TableRow className="bg-[var(--color-bg-secondary)] hover:bg-transparent">
+              <TableRow>
                 <TableHead>Site</TableHead>
                 <TableHead>Supervisor</TableHead>
                 <TableHead>Roster</TableHead>
@@ -202,35 +224,51 @@ export default function AdminDashboard() {
                 return (
                   <TableRow key={site.id}>
                     <TableCell>
-                      <p className="font-semibold text-left text-[var(--text)]">{site.name}</p>
-                      <p className="text-[10px] text-[var(--color-text-muted)] text-left">{site.region || '—'}</p>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="icon-chip"
+                          style={{ width: 34, height: 34, background: 'var(--accent-light)', color: 'var(--info)' }}
+                        >
+                          <MapPin size={15} />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-semibold text-[var(--text)] leading-tight">{site.name}</p>
+                          <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{site.region || '—'}</p>
+                        </div>
+                      </div>
                     </TableCell>
-                    <TableCell className={supervisorName === 'Unassigned' ? 'text-[var(--text-light)]' : 'text-[var(--color-text-secondary)]'}>
-                      {supervisorName}
+                    <TableCell>
+                      <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                        <UserRound size={13} className={supervisorName === 'Unassigned' ? 'text-[var(--text-light)]' : 'text-[var(--text-muted)]'} />
+                        <span className={supervisorName === 'Unassigned' ? 'text-[var(--text-light)] italic' : ''}>{supervisorName}</span>
+                      </span>
                     </TableCell>
-                    <TableCell className="text-[var(--color-text-secondary)]">
+                    <TableCell className="text-[var(--text-secondary)] font-medium">
                       {workersCount} {workersCount === 1 ? 'worker' : 'workers'}
                     </TableCell>
-                    <TableCell className="text-[var(--color-text-secondary)]">
-                      {site.hydration_interval_min || 30} min
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
+                        <Droplets size={13} style={{ color: 'var(--info)' }} />
+                        {site.hydration_interval_min || 30} min
+                      </span>
                     </TableCell>
                     <TableCell>
                       {weather ? (
                         <span className="inline-flex items-center gap-2">
-                          <span className="font-semibold text-[var(--text)]">
+                          <span className="font-mono font-bold text-[var(--text)]">
                             {Math.round(weather.heat_index)}°C
                           </span>
-                          <span className={`badge ${risk.bg} ${risk.text}`}>{risk.label}</span>
+                          <span className={`badge ${risk.className}`}>{risk.label}</span>
                         </span>
                       ) : (
-                        <span className="text-xs text-[var(--text-light)]">No data</span>
+                        <span className="badge badge-neutral">No data</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
                       <Link
                         to={`/kiosk/${site.id}`}
                         target="_blank"
-                        className="btn-secondary py-1.5 px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1"
+                        className="btn-secondary py-1.5 px-3 text-xs inline-flex items-center gap-1"
                       >
                         Kiosk <ArrowUpRight size={12} />
                       </Link>
@@ -240,8 +278,8 @@ export default function AdminDashboard() {
               })}
               {siteStatuses.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="p-12 text-center text-[var(--color-text-muted)]">
-                    No active mills yet. <Link to="/admin/sites" className="underline text-[var(--accent-teal)]">Add your first site</Link>.
+                  <TableCell colSpan={6} className="p-12 text-center text-[var(--text-muted)]">
+                    No active sites yet. <Link to="/admin/sites" className="underline font-semibold" style={{ color: 'var(--info)' }}>Add your first site</Link>.
                   </TableCell>
                 </TableRow>
               )}
@@ -254,43 +292,45 @@ export default function AdminDashboard() {
       <div className="space-y-4">
         <div className="flex items-end justify-between">
           <div className="text-left">
-            <h3 className="font-serif text-xl font-normal text-[var(--text)]">Alert stream</h3>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Recent alerts across all mills</p>
+            <h3 className="font-serif text-lg font-bold text-[var(--text)]">Alert stream</h3>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">Recent alerts across all sites</p>
           </div>
-          <Link to="/admin/alerts" className="hero-cta-link text-xs">
+          <Link to="/admin/alerts" className="hero-cta-link text-xs font-semibold">
             All alerts <ArrowUpRight size={14} />
           </Link>
         </div>
 
         {alerts.length > 0 ? (
           <Card className="overflow-hidden p-0" hoverable={false}>
-            <div className="divide-y divide-[var(--color-border)]">
+            <div className="divide-y divide-[var(--border)]">
               {alerts.slice(0, 8).map((alert) => (
                 <div
                   key={alert.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 hover:bg-[var(--color-bg-secondary)]/30 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 transition-colors hover:bg-[var(--accent-light)]"
                 >
-                  <div className="text-left">
-                    <div className="flex items-center gap-2 mb-1">
+                  <div className="text-left min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                       <span className={`badge ${SEVERITY_BADGE[alert.severity] ?? 'badge-neutral'}`}>{alert.severity}</span>
-                      <span className="text-[10px] text-[var(--color-text-light)]">
+                      <span className="text-[11px] text-[var(--text-light)] font-medium">
                         {new Date(alert.created_at).toLocaleString()}
                       </span>
                     </div>
-                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">{alert.message}</p>
-                    <p className="text-[10px] text-[var(--color-text-muted)]">{alert.site?.name ?? 'Platform'}</p>
+                    <p className="text-sm font-medium text-[var(--text-secondary)] leading-snug">{alert.message}</p>
+                    <p className="text-[11px] text-[var(--text-muted)] mt-1 flex items-center gap-1">
+                      <MapPin size={10} /> {alert.site?.name ?? 'Platform'}
+                    </p>
                   </div>
                   <div className="shrink-0 text-right">
                     {alert.status === 'active' ? (
                       <Button
                         onClick={() => handleResolveAlert(alert.id)}
                         variant="secondary"
-                        className="py-1.5 px-3 rounded-lg text-xs font-semibold"
+                        className="py-1.5 px-3 text-xs"
                       >
                         Resolve
                       </Button>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: 'var(--safe)' }}>
                         <CheckCircle2 size={13} /> Resolved
                       </span>
                     )}
@@ -300,10 +340,23 @@ export default function AdminDashboard() {
             </div>
           </Card>
         ) : (
-          <Card className="p-10 text-center" hoverable={false}>
-            <CheckCircle2 size={24} className="mx-auto mb-3 text-[var(--color-text-light)]" />
-            <p className="text-sm text-[var(--color-text-muted)] font-medium">The alert stream is clear.</p>
-          </Card>
+          <div className="empty-state">
+            <div className="empty-shield" aria-hidden="true">
+              <span className="empty-shield-ring" />
+              <span className="empty-shield-ring" />
+              <div className="empty-shield-core">
+                <ShieldCheck size={42} strokeWidth={1.75} />
+              </div>
+            </div>
+            <p className="font-serif text-xl font-bold text-[var(--text)]">No active incidents</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1.5 max-w-xs leading-relaxed">
+              All monitored kiln sites are operating safely.
+            </p>
+            <span className="badge badge-success mt-5">
+              <span className="status-dot" style={{ background: 'var(--safe)' }} />
+              Systems Nominal
+            </span>
+          </div>
         )}
       </div>
     </div>

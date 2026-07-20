@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, X, MapPin } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, X, MapPin, Users, Droplets, Navigation } from 'lucide-react';
 import { useAlerts } from '@/context/AlertContext';
 import { getAllSites, createSite, updateSite, deleteSite } from '@/lib/api/sites';
 import { getSiteWorkerCount } from '@/lib/api/workers';
@@ -29,6 +29,12 @@ const emptyForm: SiteForm = {
   region: '',
   hydration_interval_min: 30,
   status: 'active',
+};
+
+const STATUS_BADGE: Record<string, string> = {
+  active: 'badge-success',
+  inactive: 'badge-neutral',
+  suspended: 'badge-orange',
 };
 
 export default function KilnSiteManagerPage() {
@@ -135,10 +141,10 @@ export default function KilnSiteManagerPage() {
 
       setShowModal(false);
       loadData();
-      addToast({ 
-        title: 'Success', 
-        message: editingSite ? 'Kiln site updated' : 'Kiln site created successfully', 
-        type: 'success' 
+      addToast({
+        title: 'Success',
+        message: editingSite ? 'Kiln site updated' : 'Kiln site created successfully',
+        type: 'success'
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save kiln site';
@@ -173,37 +179,38 @@ export default function KilnSiteManagerPage() {
 
   return (
     <div className="space-y-6 animate-fade-up">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold mb-1">Kiln Site Manager</h2>
-          <p className="text-[var(--color-text-muted)] text-sm">Manage all brick kiln mills and their statuses</p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="text-left">
+          <p className="eyebrow mb-1.5">Site Management</p>
+          <h2 className="page-title">Kiln Sites</h2>
+          <p className="page-subtitle">Manage all brick kiln sites and their operational status</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] z-10" />
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-light)] z-10" />
             <Input
               type="text"
               placeholder="Search sites..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 w-64"
+              className="pl-10 w-64"
             />
           </div>
-          <Button onClick={openCreate} variant="primary" className="py-2.5 px-4 rounded-xl flex items-center gap-2 font-medium">
+          <Button onClick={openCreate} variant="primary" className="py-2.5 px-4">
             <Plus size={16} /> Add Site
           </Button>
         </div>
       </div>
 
       {error ? (
-        <Card className="p-8 text-center max-w-lg mx-auto border-red-500/20 bg-red-500/5">
-          <p className="text-red-500 font-semibold">{error}</p>
+        <Card className="p-8 text-center max-w-lg mx-auto" hoverable={false} style={{ borderColor: 'rgba(220,38,38,0.25)', background: 'var(--emergency-bg)' }}>
+          <p className="font-semibold" style={{ color: 'var(--emergency)' }}>{error}</p>
         </Card>
       ) : (
         <Card className="overflow-hidden p-0" hoverable={false}>
           <Table>
             <TableHeader>
-              <TableRow className="bg-[var(--color-bg-secondary)] hover:bg-transparent">
+              <TableRow>
                 <TableHead>Site Name</TableHead>
                 <TableHead>Region</TableHead>
                 <TableHead>Workers</TableHead>
@@ -214,46 +221,67 @@ export default function KilnSiteManagerPage() {
             </TableHeader>
             <TableBody>
               {filtered.map((site) => (
-                <TableRow key={site.id}>
+                <TableRow key={site.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-[var(--color-bg-secondary)] flex items-center justify-center">
-                        <MapPin size={18} className="text-indigo-400" />
+                      <div
+                        className="icon-chip transition-transform duration-200 group-hover:scale-110"
+                        style={{ background: 'var(--accent-light)', color: 'var(--info)' }}
+                      >
+                        <MapPin size={16} />
                       </div>
-                      <div>
-                        <p className="font-semibold text-left">{site.name}</p>
-                        <p className="text-xs text-[var(--color-text-muted)] text-left">{site.address || `${site.latitude.toFixed(3)}, ${site.longitude.toFixed(3)}`}</p>
+                      <div className="text-left">
+                        <p className="font-semibold text-[var(--text)] leading-tight">{site.name}</p>
+                        <p className="text-[11px] text-[var(--text-muted)] mt-0.5 flex items-center gap-1">
+                          <Navigation size={9} />
+                          {site.address || `${site.latitude.toFixed(3)}, ${site.longitude.toFixed(3)}`}
+                        </p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-[var(--color-text-muted)]">{site.region || '—'}</TableCell>
-                  <TableCell className="font-medium text-left">{workerCounts[site.id] ?? 0}</TableCell>
-                  <TableCell className="text-sm font-mono text-[var(--color-text-muted)]">{site.hydration_interval_min ?? 30} min</TableCell>
+                  <TableCell className="text-[var(--text-secondary)]">{site.region || '—'}</TableCell>
                   <TableCell>
-                    <span className={`badge ${site.status === 'active' ? 'badge-success' : 'badge-neutral'}`}>
-                      {site.status.toUpperCase()}
+                    <span className="inline-flex items-center gap-1.5 font-medium text-[var(--text-secondary)]">
+                      <Users size={13} className="text-[var(--text-light)]" />
+                      {workerCounts[site.id] ?? 0}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center gap-1.5 font-mono text-sm text-[var(--text-secondary)]">
+                      <Droplets size={13} style={{ color: 'var(--info)' }} />
+                      {site.hydration_interval_min ?? 30} min
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`badge ${STATUS_BADGE[site.status] ?? 'badge-neutral'}`}>
+                      {site.status === 'active' && <span className="status-dot" style={{ background: 'var(--safe)' }} />}
+                      {site.status}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <button
-                      onClick={() => openEdit(site)}
-                      className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)] rounded-lg transition-colors inline-block mr-1 cursor-pointer"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(site)}
-                      className="p-2 text-[var(--color-text-muted)] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors inline-block cursor-pointer"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="inline-flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openEdit(site)}
+                        className="btn-icon"
+                        aria-label={`Edit ${site.name}`}
+                      >
+                        <Edit2 size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(site)}
+                        className="btn-icon btn-icon-danger"
+                        aria-label={`Delete ${site.name}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="p-10 text-center text-[var(--color-text-muted)]">
-                    No kiln sites yet. Add your first mill to get started.
+                  <TableCell colSpan={6} className="p-12 text-center text-[var(--text-muted)]">
+                    No kiln sites yet. Add your first site to get started.
                   </TableCell>
                 </TableRow>
               )}
@@ -264,12 +292,22 @@ export default function KilnSiteManagerPage() {
 
       {/* ── CREATE / EDIT MODAL ── */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-6 z-50 animate-fade-in">
-          <Card className="w-full max-w-lg bg-[var(--bg-card)] p-6 space-y-4" hoverable={false}>
-            <div className="flex justify-between items-center border-b border-[var(--border)] pb-3">
-              <h3 className="text-lg font-bold font-serif">{editingSite ? `Edit ${editingSite.name}` : 'Add Kiln Site'}</h3>
-              <button type="button" onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
-                <X size={20} />
+        <div className="modal-overlay">
+          <Card className="w-full max-w-lg p-6 space-y-4 modal-card" hoverable={false}>
+            <div className="flex justify-between items-center border-b border-[var(--border)] pb-4">
+              <div className="text-left">
+                <h3 className="font-serif text-lg font-bold">{editingSite ? `Edit ${editingSite.name}` : 'Add Kiln Site'}</h3>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  {editingSite ? 'Update site details and operational status' : 'Register a new brick kiln site on the platform'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="btn-icon"
+                aria-label="Close dialog"
+              >
+                <X size={18} />
               </button>
             </div>
 
@@ -301,7 +339,7 @@ export default function KilnSiteManagerPage() {
                     label="Latitude"
                     id="latitude"
                     required
-                    placeholder="26.12"
+                    placeholder="12.71"
                     value={form.latitude}
                     onChange={(e) => setForm((p) => ({ ...p, latitude: e.target.value }))}
                   />
@@ -309,7 +347,7 @@ export default function KilnSiteManagerPage() {
                     label="Longitude"
                     id="longitude"
                     required
-                    placeholder="85.36"
+                    placeholder="77.69"
                     value={form.longitude}
                     onChange={(e) => setForm((p) => ({ ...p, longitude: e.target.value }))}
                   />
@@ -339,14 +377,19 @@ export default function KilnSiteManagerPage() {
               </div>
 
               {formError && (
-                <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-left font-medium">{formError}</p>
+                <p
+                  className="text-sm rounded-xl px-3.5 py-2.5 text-left font-medium animate-scale-up"
+                  style={{ color: 'var(--emergency)', background: 'var(--emergency-bg)', border: '1px solid rgba(220,38,38,0.2)' }}
+                >
+                  {formError}
+                </p>
               )}
 
-              <div className="flex justify-end gap-3 border-t border-[var(--border)] pt-3">
-                <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="py-2.5 px-5 rounded-xl font-medium">
+              <div className="flex justify-end gap-3 border-t border-[var(--border)] pt-4">
+                <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="py-2.5 px-5">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={saving} loading={saving} variant="primary" className="py-2.5 px-5 rounded-xl font-medium">
+                <Button type="submit" disabled={saving} loading={saving} variant="primary" className="py-2.5 px-5">
                   {editingSite ? 'Save Changes' : 'Create Site'}
                 </Button>
               </div>

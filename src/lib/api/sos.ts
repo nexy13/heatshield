@@ -1,13 +1,16 @@
 import { supabase } from '@/lib/supabase';
+import { composeEmergencySMS, sendSupervisorSMS } from '@/lib/api/notifications';
 import type { SOSEvent, SOSEventWithDetails, Worker } from '@/types/database';
 
 /**
  * Trigger an SOS event.
  *
  * Inserts the event (with worker_id when the worker identified themselves on
- * the kiosk, null when the anonymous fallback fired), raises an emergency
- * alert, and notifies the n8n SMS webhook with the worker's name and medical
- * details (or "Unidentified worker"), the site name, and the location.
+ * the kiosk, null when the anonymous fallback fired), logs an emergency
+ * alert for history/analytics, and — as the primary real-time channel —
+ * dispatches an SMS to the assigned site supervisor via the notification
+ * service, carrying the worker's name and medical details (or
+ * "Unidentified worker"), the site name, live heat index, and location.
  */
 export async function triggerSOS(
   workerId: string | null,
@@ -16,19 +19,32 @@ export async function triggerSOS(
   longitude?: number,
   description?: string
 ): Promise<SOSEvent> {
-  // Look up site name + worker details for the alert message and SMS payload.
-  // Failures here must never block the SOS insert itself.
+  // Look up site, worker, and live heat index for the alert message and SMS
+  // payload. Failures here must never block the SOS insert itself.
   let siteName = 'Unknown site';
+  let siteRegion: string | null = null;
   let worker: Worker | null = null;
+  let heatIndex: number | null = null;
+  let riskLevel: string | null = null;
   try {
-    const [siteRes, workerRes] = await Promise.all([
-      supabase.from('kiln_sites').select('name').eq('id', siteId).maybeSingle(),
+    const [siteRes, workerRes, weatherRes] = await Promise.all([
+      supabase.from('kiln_sites').select('name, region, address').eq('id', siteId).maybeSingle(),
       workerId
         ? supabase.from('workers').select('*').eq('id', workerId).maybeSingle()
         : Promise.resolve({ data: null }),
+      supabase
+        .from('weather_readings')
+        .select('heat_index, risk_level')
+        .eq('site_id', siteId)
+        .order('recorded_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
     siteName = siteRes.data?.name ?? siteName;
+    siteRegion = siteRes.data?.region ?? siteRes.data?.address ?? null;
     worker = (workerRes.data as Worker | null) ?? null;
+    heatIndex = weatherRes.data?.heat_index ?? null;
+    riskLevel = weatherRes.data?.risk_level ?? null;
   } catch (err) {
     console.error('SOS enrichment lookup failed:', err);
   }
@@ -61,30 +77,34 @@ export async function triggerSOS(
     status: 'active',
   });
 
-  // Notify n8n so the site supervisor gets an SMS. Fire-and-forget: an SMS
-  // routing failure must never make the SOS itself appear to have failed.
-  const webhookUrl = import.meta.env.VITE_N8N_SOS_WEBHOOK_URL;
-  if (webhookUrl) {
-    fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sos_id: data.id,
-        worker_id: workerId,
-        worker_name: workerName,
-        blood_group: worker?.blood_group ?? null,
-        medical_conditions: worker?.medical_conditions ?? [],
-        emergency_contact_name: worker?.emergency_contact_name ?? null,
-        emergency_contact_phone: worker?.emergency_contact_phone ?? null,
-        site_id: siteId,
-        site_name: siteName,
-        latitude: latitude ?? null,
-        longitude: longitude ?? null,
-        triggered_at: data.triggered_at,
-        description: description ?? null,
-      }),
-    }).catch((err) => console.error('n8n SOS webhook failed:', err));
-  }
+  // Primary real-time notification: SMS to the assigned site supervisor.
+  const smsText = composeEmergencySMS({
+    workerName,
+    siteName,
+    siteLocation: siteRegion ?? 'On-site GPS attached',
+    heatIndex,
+    riskLevel,
+    triggeredAt: data.triggered_at,
+  });
+
+  sendSupervisorSMS({
+    sms_text: smsText,
+    sos_id: data.id,
+    worker_id: workerId,
+    worker_name: workerName,
+    blood_group: worker?.blood_group ?? null,
+    medical_conditions: worker?.medical_conditions ?? [],
+    emergency_contact_name: worker?.emergency_contact_name ?? null,
+    emergency_contact_phone: worker?.emergency_contact_phone ?? null,
+    site_id: siteId,
+    site_name: siteName,
+    heat_index: heatIndex,
+    risk_level: riskLevel,
+    latitude: latitude ?? null,
+    longitude: longitude ?? null,
+    triggered_at: data.triggered_at,
+    description: description ?? null,
+  });
 
   return data;
 }

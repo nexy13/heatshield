@@ -43,7 +43,9 @@ BEGIN
   END IF;
 END $$;
 
--- 2. Migrate legacy sites -> kiln_sites (IDs preserved; coordinates by zone).
+-- 2. Migrate legacy sites -> kiln_sites (IDs preserved).
+--    Legacy zone labels are remapped onto the Bengaluru kiln belt:
+--    coordinates and region names become Bengaluru clusters.
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables
@@ -54,18 +56,23 @@ BEGIN
       s.name,
       s.location,
       CASE s.zone
-        WHEN 'North Zone' THEN 27.1534
-        WHEN 'West Zone'  THEN 28.6925
-        WHEN 'East Zone'  THEN 26.1209
-        ELSE 23.5937
+        WHEN 'North Zone' THEN 12.8590  -- Sarjapura
+        WHEN 'West Zone'  THEN 12.7861  -- Jigani
+        WHEN 'East Zone'  THEN 12.7110  -- Anekal
+        ELSE 12.8167                    -- Bommasandra
       END,
       CASE s.zone
-        WHEN 'North Zone' THEN 78.3957
-        WHEN 'West Zone'  THEN 76.6536
-        WHEN 'East Zone'  THEN 85.3647
-        ELSE 80.9629
+        WHEN 'North Zone' THEN 77.7860
+        WHEN 'West Zone'  THEN 77.6390
+        WHEN 'East Zone'  THEN 77.6970
+        ELSE 77.6980
       END,
-      s.zone,
+      CASE s.zone
+        WHEN 'North Zone' THEN 'East Bengaluru'
+        WHEN 'West Zone'  THEN 'South Bengaluru'
+        WHEN 'East Zone'  THEN 'East Bengaluru'
+        ELSE 'South Bengaluru'
+      END,
       'active'
     FROM public.sites s
     ON CONFLICT (id) DO NOTHING;

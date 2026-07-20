@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Shield, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
@@ -67,53 +67,74 @@ export default function LoginPage() {
     }
   };
 
+  const fieldLabel: React.CSSProperties = {
+    fontFamily: 'var(--font-sans)',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    color: 'rgba(203, 213, 225, 0.85)',
+    letterSpacing: '0.04em',
+    display: 'block',
+    marginBottom: '0.5rem',
+    textTransform: 'uppercase',
+  };
+
+  const fieldInput: React.CSSProperties = {
+    paddingLeft: '2.625rem',
+    borderRadius: '12px',
+    background: 'rgba(148, 163, 184, 0.07)',
+    border: '1px solid rgba(148, 163, 184, 0.18)',
+    color: '#F1F5F9',
+    boxShadow: 'none',
+  };
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-      overflow: 'hidden',
-      padding: '2rem 1.5rem',
-      background: 'var(--bg)',
-    }}>
-      {/* Full-bleed background image */}
-      <img
-        src="/hero.jpg"
-        alt=""
+    <div
+      style={{
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        padding: '2rem 1.5rem',
+        background:
+          'radial-gradient(1100px 650px at 80% -10%, rgba(37, 99, 235, 0.16), transparent 60%), radial-gradient(900px 550px at -10% 110%, rgba(234, 88, 12, 0.1), transparent 55%), linear-gradient(160deg, #060D1F 0%, #0A1428 55%, #0D1A33 100%)',
+      }}
+    >
+      {/* Ambient aurora orbs */}
+      <div className="mesh-bg" aria-hidden="true">
+        <div className="mesh-orb" />
+        <div className="mesh-orb" />
+      </div>
+
+      {/* Subtle grid texture */}
+      <div
+        aria-hidden="true"
         style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          filter: 'brightness(0.92) contrast(0.9) saturate(0.7) blur(2px)',
           position: 'absolute',
           inset: 0,
-          zIndex: 0,
+          backgroundImage:
+            'linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px)',
+          backgroundSize: '44px 44px',
+          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 75%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 75%)',
         }}
       />
-      {/* Warm-beige / dust tone faded overlay */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'linear-gradient(135deg, rgba(247, 246, 243, 0.85) 0%, rgba(234, 229, 218, 0.8) 100%)',
-        zIndex: 1,
-      }} />
 
-      {/* Centered glassmorphic card */}
+      {/* Centered glass card */}
       <div
         className="animate-fade-up"
         style={{
           width: '100%',
-          maxWidth: '440px',
-          background: 'rgba(255, 255, 255, 0.65)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(45, 122, 101, 0.12)',
-          borderRadius: '18px',
-          boxShadow: 'var(--shadow-lg)',
-          padding: '2.5rem 2.25rem',
+          maxWidth: '430px',
+          background: 'rgba(15, 26, 48, 0.62)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(148, 163, 184, 0.16)',
+          borderRadius: '24px',
+          boxShadow: '0 32px 80px rgba(3, 7, 18, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+          padding: '2.75rem 2.5rem',
           position: 'relative',
           zIndex: 2,
           display: 'flex',
@@ -121,52 +142,82 @@ export default function LoginPage() {
         }}
       >
         {/* Logo */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-            <div style={{ width: 24, height: 24, borderRadius: 5, background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Shield size={12} color="#fff" />
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.75rem' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', textDecoration: 'none' }}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #2563EB, #1B2E52)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(37, 99, 235, 0.4)',
+              }}
+            >
+              <Shield size={20} color="#fff" strokeWidth={2.25} />
             </div>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.06em', color: 'var(--text)' }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: '1rem',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                color: '#F8FAFC',
+              }}
+            >
               HEATSHIELD
             </span>
           </Link>
         </div>
 
-        {/* Small caps eyebrow */}
-        <p style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: '0.65rem',
-          fontWeight: 500,
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          color: 'var(--text-secondary)',
-          textAlign: 'center',
-          marginBottom: '0.5rem',
-        }}>
-          SECURE ACCESS — WORKER SAFETY PLATFORM
+        {/* Eyebrow */}
+        <p
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '0.65rem',
+            fontWeight: 600,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: '#60A5FA',
+            textAlign: 'center',
+            marginBottom: '0.625rem',
+          }}
+        >
+          Secure Access — Worker Safety Platform
         </p>
 
         {/* Title */}
-        <h2 style={{
-          fontFamily: 'var(--font-serif)',
-          fontSize: '2.25rem',
-          fontWeight: 400,
-          color: 'var(--text)',
-          textAlign: 'center',
-          letterSpacing: '-0.015em',
-          marginBottom: '2rem',
-          lineHeight: 1.2,
-        }}>
-          Login
+        <h2
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '1.875rem',
+            fontWeight: 700,
+            color: '#F8FAFC',
+            textAlign: 'center',
+            letterSpacing: '-0.02em',
+            marginBottom: '2rem',
+            lineHeight: 1.2,
+          }}
+        >
+          Welcome back
         </h2>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
-            <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '0.02em', display: 'block', marginBottom: '0.5rem' }}>
-              Email address
-            </label>
+            <label style={fieldLabel}>Email address</label>
             <div style={{ position: 'relative' }}>
-              <Mail size={14} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+              <Mail
+                size={15}
+                style={{
+                  position: 'absolute',
+                  left: '0.9375rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'rgba(148, 163, 184, 0.7)',
+                }}
+              />
               <input
                 type="email"
                 value={email}
@@ -174,17 +225,24 @@ export default function LoginPage() {
                 placeholder="your@email.com"
                 required
                 className="input-field"
-                style={{ paddingLeft: '2.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.7)', borderColor: 'rgba(27, 77, 62, 0.15)' }}
+                style={fieldInput}
               />
             </div>
           </div>
 
           <div>
-            <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '0.02em', display: 'block', marginBottom: '0.5rem' }}>
-              Password
-            </label>
+            <label style={fieldLabel}>Password</label>
             <div style={{ position: 'relative' }}>
-              <Lock size={14} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+              <Lock
+                size={15}
+                style={{
+                  position: 'absolute',
+                  left: '0.9375rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'rgba(148, 163, 184, 0.7)',
+                }}
+              />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -192,7 +250,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 required
                 className="input-field"
-                style={{ paddingLeft: '2.5rem', paddingRight: '2.75rem', borderRadius: '4px', background: 'rgba(255,255,255,0.7)', borderColor: 'rgba(27, 77, 62, 0.15)' }}
+                style={{ ...fieldInput, paddingRight: '2.75rem' }}
               />
               <button
                 type="button"
@@ -208,7 +266,7 @@ export default function LoginPage() {
                   cursor: 'pointer',
                   padding: '0.25rem',
                   display: 'flex',
-                  color: 'var(--text-muted)',
+                  color: 'rgba(148, 163, 184, 0.7)',
                 }}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -217,12 +275,25 @@ export default function LoginPage() {
           </div>
 
           {/* Remember me & Forgot password row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', fontFamily: 'var(--font-sans)' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-              <input
-                type="checkbox"
-                style={{ accentColor: 'var(--accent-teal)', cursor: 'pointer' }}
-              />
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '0.8125rem',
+              fontFamily: 'var(--font-sans)',
+            }}
+          >
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                color: 'rgba(203, 213, 225, 0.75)',
+              }}
+            >
+              <input type="checkbox" style={{ accentColor: '#2563EB', cursor: 'pointer' }} />
               <span>Remember me</span>
             </label>
             <button
@@ -230,48 +301,64 @@ export default function LoginPage() {
               onClick={handleForgotPassword}
               disabled={sendingReset}
               style={{
-                color: 'var(--accent-teal)',
+                color: '#60A5FA',
                 background: 'none',
                 border: 'none',
                 cursor: sendingReset ? 'wait' : 'pointer',
-                fontWeight: 500,
+                fontWeight: 600,
                 fontSize: '0.8125rem',
                 fontFamily: 'var(--font-sans)',
                 padding: 0,
                 transition: 'opacity 0.2s',
               }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.opacity = '0.8'; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.opacity = '1'; }}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '0.8'; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '1'; }}
             >
               {sendingReset ? 'Sending…' : 'Forgot Password?'}
             </button>
           </div>
 
           {error && (
-            <div style={{
-              padding: '0.75rem 1rem',
-              borderRadius: '4px',
-              background: 'rgba(185, 28, 28, 0.06)',
-              border: '1px solid rgba(185, 28, 28, 0.2)',
-              fontFamily: 'var(--font-sans)',
-              fontSize: '0.8125rem',
-              color: '#B91C1C',
-            }}>
-              {error}
+            <div
+              className="animate-scale-up"
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.625rem',
+                padding: '0.8125rem 1rem',
+                borderRadius: '12px',
+                background: 'rgba(220, 38, 38, 0.12)',
+                border: '1px solid rgba(248, 113, 113, 0.3)',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.8125rem',
+                color: '#FCA5A5',
+                lineHeight: 1.5,
+              }}
+            >
+              <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+              <span>{error}</span>
             </div>
           )}
 
           {notice && (
-            <div style={{
-              padding: '0.75rem 1rem',
-              borderRadius: '4px',
-              background: 'rgba(45, 122, 101, 0.08)',
-              border: '1px solid rgba(45, 122, 101, 0.25)',
-              fontFamily: 'var(--font-sans)',
-              fontSize: '0.8125rem',
-              color: 'var(--accent)',
-            }}>
-              {notice}
+            <div
+              className="animate-scale-up"
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.625rem',
+                padding: '0.8125rem 1rem',
+                borderRadius: '12px',
+                background: 'rgba(22, 163, 74, 0.12)',
+                border: '1px solid rgba(74, 222, 128, 0.3)',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.8125rem',
+                color: '#86EFAC',
+                lineHeight: 1.5,
+              }}
+            >
+              <CheckCircle2 size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+              <span>{notice}</span>
             </div>
           )}
 
@@ -281,31 +368,35 @@ export default function LoginPage() {
             className="btn-primary"
             style={{
               marginTop: '0.5rem',
-              padding: '0.75rem 1.75rem',
+              padding: '0.8125rem 1.75rem',
               fontSize: '0.875rem',
-              justifyContent: 'center',
-              borderRadius: '4px',
+              borderRadius: '12px',
               width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
+              background: 'linear-gradient(180deg, #3B82F6 0%, #1D4ED8 100%)',
+              boxShadow: '0 8px 24px rgba(37, 99, 235, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
             }}
           >
             {loading ? (
-              <><Loader2 size={16} className="animate-spin" /> Signing in...</>
+              <>
+                <Loader2 size={16} className="animate-spin" /> Signing in...
+              </>
             ) : (
-              <>Sign In <ArrowRight size={15} /></>
+              <>
+                Sign In <ArrowRight size={15} />
+              </>
             )}
           </button>
         </form>
 
-        <p style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: '0.8125rem',
-          color: 'var(--text-muted)',
-          marginTop: '2rem',
-          textAlign: 'center',
-        }}>
+        <p
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '0.8125rem',
+            color: 'rgba(148, 163, 184, 0.75)',
+            marginTop: '2rem',
+            textAlign: 'center',
+          }}
+        >
           Accounts are created by your administrator.
         </p>
       </div>

@@ -58,37 +58,38 @@ export default function SystemAlertsPage() {
     ? alerts.filter((a) => a.status === 'active')
     : alerts;
 
+  const activeCount = alerts.filter((a) => a.status === 'active').length;
+
   if (loading && alerts.length === 0) {
     return <Spinner label="Loading alerts..." />;
   }
 
   return (
     <div className="space-y-6 animate-fade-up max-w-4xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold mb-1 text-left">Alerts Manager</h2>
-          <p className="text-[var(--color-text-muted)] text-sm text-left">
-            {role === 'admin' ? 'System-wide alerts across all mills' : 'Alerts for your mill'}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="text-left">
+          <p className="eyebrow mb-1.5 flex items-center gap-2">
+            {activeCount > 0 && <span className="pulse-dot" style={{ background: 'var(--emergency)' }} />}
+            Incident Response
+          </p>
+          <h2 className="page-title">Alerts Manager</h2>
+          <p className="page-subtitle">
+            {role === 'admin' ? 'System-wide alerts across all sites' : 'Alerts for your site'}
+            {activeCount > 0 && (
+              <span className="ml-2 badge badge-danger">{activeCount} active</span>
+            )}
           </p>
         </div>
-        <div className="flex p-1 bg-[var(--color-bg-secondary)] rounded-lg">
+        <div className="segment">
           <button
             onClick={() => setFilter('active')}
-            className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all cursor-pointer ${
-              filter === 'active'
-                ? 'bg-[var(--bg-white)] text-[var(--text)] shadow-sm'
-                : 'text-[var(--color-text-muted)] hover:text-[var(--text)]'
-            }`}
+            className={`segment-item ${filter === 'active' ? 'active' : ''}`}
           >
             Active Only
           </button>
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all cursor-pointer ${
-              filter === 'all'
-                ? 'bg-[var(--bg-white)] text-[var(--text)] shadow-sm'
-                : 'text-[var(--color-text-muted)] hover:text-[var(--text)]'
-            }`}
+            className={`segment-item ${filter === 'all' ? 'active' : ''}`}
           >
             All Alerts
           </button>
@@ -96,8 +97,8 @@ export default function SystemAlertsPage() {
       </div>
 
       {error ? (
-        <Card className="p-8 text-center max-w-lg mx-auto border-red-500/20 bg-red-500/5">
-          <p className="text-red-500 font-semibold">{error}</p>
+        <Card className="p-8 text-center max-w-lg mx-auto" hoverable={false} style={{ borderColor: 'rgba(220,38,38,0.25)', background: 'var(--emergency-bg)' }}>
+          <p className="font-semibold" style={{ color: 'var(--emergency)' }}>{error}</p>
         </Card>
       ) : (
         <AlertFeed

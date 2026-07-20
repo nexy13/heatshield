@@ -34,3 +34,6 @@ dist-ssr
 Thumbs.db
 
 supabase/.temp/
+
+# Claude Code local settings
+.claude/settings.local.json

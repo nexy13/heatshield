@@ -4,20 +4,29 @@ import { Button } from '@/components/ui/Button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 
 const mockReports = [
-  { id: '1', site: 'Rajput Brick Works', date: '2026-07-15', grade: 'B', workers: 24, issues: 2 },
-  { id: '2', site: 'Sharma Kilns', date: '2026-07-15', grade: 'A', workers: 18, issues: 0 },
-  { id: '3', site: 'Bihar Brick Ind.', date: '2026-07-15', grade: 'C', workers: 32, issues: 5 },
+  { id: '1', site: 'Anekal Brick Industries', date: '2026-07-19', grade: 'A', workers: 42, issues: 0 },
+  { id: '2', site: 'Jigani Eco Bricks', date: '2026-07-19', grade: 'A', workers: 36, issues: 0 },
+  { id: '3', site: 'Bommasandra Kilns', date: '2026-07-19', grade: 'B', workers: 51, issues: 2 },
+  { id: '4', site: 'Attibele Clay Works', date: '2026-07-19', grade: 'B', workers: 28, issues: 1 },
+  { id: '5', site: 'Chandapura Brick Industries', date: '2026-07-19', grade: 'C', workers: 18, issues: 4 },
 ];
+
+const GRADE_BADGE: Record<string, string> = {
+  A: 'badge-success',
+  B: 'badge-info',
+  C: 'badge-warning',
+};
 
 export default function ComplianceReportsPage() {
   return (
     <div className="space-y-6 animate-fade-up">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold mb-1 text-left">Compliance Reports</h2>
-          <p className="text-[var(--color-text-muted)] text-sm text-left">Automated safety & NGO compliance logs</p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="text-left">
+          <p className="eyebrow mb-1.5">Governance</p>
+          <h2 className="page-title">Compliance Reports</h2>
+          <p className="page-subtitle">Automated safety & NGO compliance logs</p>
         </div>
-        <Button variant="primary" className="py-2.5 px-4 rounded-xl flex items-center gap-2">
+        <Button variant="primary" className="py-2.5 px-4">
           <Download size={16} /> Export All (CSV)
         </Button>
       </div>
@@ -25,7 +34,7 @@ export default function ComplianceReportsPage() {
       <Card className="overflow-hidden p-0" hoverable={false}>
         <Table>
           <TableHeader>
-            <TableRow className="bg-[var(--color-bg-secondary)] hover:bg-transparent">
+            <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Site Name</TableHead>
               <TableHead>Workers</TableHead>
@@ -36,32 +45,31 @@ export default function ComplianceReportsPage() {
           </TableHeader>
           <TableBody>
             {mockReports.map((report) => (
-              <TableRow key={report.id}>
-                <TableCell className="text-[var(--color-text-muted)]">{report.date}</TableCell>
-                <TableCell className="font-semibold text-left">{report.site}</TableCell>
-                <TableCell>{report.workers}</TableCell>
+              <TableRow key={report.id} className="group">
+                <TableCell className="text-[var(--text-muted)] font-mono text-sm">{report.date}</TableCell>
+                <TableCell className="font-semibold text-left text-[var(--text)]">{report.site}</TableCell>
+                <TableCell className="text-[var(--text-secondary)]">{report.workers}</TableCell>
                 <TableCell>
-                  <span className={`badge ${
-                    report.grade === 'A' ? 'badge-success' :
-                    report.grade === 'B' ? 'badge-info' :
-                    report.grade === 'C' ? 'badge-warning' : 'badge-danger'
-                  }`}>
+                  <span className={`badge ${GRADE_BADGE[report.grade] ?? 'badge-danger'}`}>
                     Grade {report.grade}
                   </span>
                 </TableCell>
                 <TableCell>
                   {report.issues > 0 ? (
-                    <span className="text-indigo-400 font-medium flex items-center gap-1">
+                    <span className="font-semibold flex items-center gap-1" style={{ color: 'var(--high)' }}>
                       {report.issues} Issues
                     </span>
                   ) : (
-                    <span className="text-emerald-400 flex items-center gap-1">
+                    <span className="flex items-center gap-1 font-medium" style={{ color: 'var(--safe)' }}>
                       <Shield size={14} /> Clear
                     </span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <button className="text-sm font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer">
+                  <button
+                    className="text-sm font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                    style={{ color: 'var(--info)' }}
+                  >
                     <FileText size={14} /> View
                   </button>
                 </TableCell>

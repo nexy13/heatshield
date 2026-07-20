@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Siren, CheckCircle2, Phone, AlertTriangle, Loader2, Droplet } from 'lucide-react';
+import { MapPin, Siren, Phone, AlertTriangle, Droplet, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import {
   getActiveSOS,
@@ -10,6 +10,7 @@ import {
   resolveSOS,
 } from '@/lib/api/sos';
 import type { SOSEventWithDetails } from '@/types/database';
+import Spinner from '@/components/ui/Spinner';
 
 function timeAgo(iso: string): string {
   const diffMin = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -83,92 +84,119 @@ export default function SOSResponsePage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-10 h-10 text-[var(--color-text-muted)] animate-spin mb-4" />
-        <p className="text-[var(--color-text-muted)]">Loading SOS events...</p>
-      </div>
-    );
+    return <Spinner label="Loading SOS events..." />;
   }
 
   if (error) {
     return (
-      <div className="p-8 glass rounded-2xl text-center max-w-lg mx-auto mt-10">
-        <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-4" />
-        <p className="text-[var(--color-text-muted)]">{error}</p>
+      <div className="card p-8 text-center max-w-lg mx-auto mt-10">
+        <AlertTriangle className="w-10 h-10 mx-auto mb-4" style={{ color: 'var(--emergency)' }} />
+        <p className="text-[var(--text-muted)]">{error}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-8 animate-fade-up">
-      <div>
-        <h2 className="text-2xl font-bold mb-1 flex items-center gap-2 text-red-400">
-          <Siren size={24} className={active.length > 0 ? 'animate-pulse' : ''} />
+      <div className="text-left">
+        <p className="eyebrow mb-1.5 flex items-center gap-2" style={{ color: 'var(--emergency)' }}>
+          {active.length > 0 && <span className="pulse-dot" style={{ background: 'var(--emergency)' }} />}
+          Emergency Response
+        </p>
+        <h2 className="page-title flex items-center gap-2.5">
+          <Siren size={24} style={{ color: 'var(--emergency)' }} className={active.length > 0 ? 'animate-pulse' : ''} />
           Active SOS Emergencies
         </h2>
-        <p className="text-[var(--color-text-muted)] text-sm">Immediate response required</p>
+        <p className="page-subtitle">Immediate response required</p>
       </div>
 
       {active.length === 0 ? (
-        <div className="glass rounded-xl p-10 text-center flex flex-col items-center justify-center">
-          <CheckCircle2 size={48} className="text-emerald-400 mb-4 opacity-50" />
-          <p className="text-lg font-semibold">No Active Emergencies</p>
-          <p className="text-sm text-[var(--color-text-muted)]">All workers are currently safe.</p>
+        <div className="empty-state">
+          <div className="empty-state-icon" style={{ background: 'var(--safe-bg)', color: 'var(--safe)' }}>
+            <ShieldCheck size={26} />
+          </div>
+          <p className="text-base font-semibold text-[var(--text)]">No Active Emergencies</p>
+          <p className="text-sm text-[var(--text-muted)] mt-1">All workers are currently safe.</p>
         </div>
       ) : (
         <div className="grid gap-4">
           {active.map((sos) => (
-            <div key={sos.id} className="glass rounded-xl p-6 border border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)] relative overflow-hidden">
+            <div
+              key={sos.id}
+              className="card p-6 relative overflow-hidden badge-live"
+              style={{
+                borderColor: 'rgba(220, 38, 38, 0.4)',
+                boxShadow: '0 0 32px rgba(220, 38, 38, 0.12), var(--shadow-sm)',
+              }}
+            >
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-0 top-0 h-1"
+                style={{ background: 'linear-gradient(90deg, var(--emergency), rgba(220,38,38,0.15))' }}
+              />
               <div className="flex flex-col md:flex-row gap-6 justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="badge badge-danger animate-pulse">
-                      {sos.status === 'responding' ? 'RESPONDING' : 'URGENT SOS'}
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-3 mb-2.5">
+                    <span className="badge badge-danger badge-live">
+                      <span className="status-dot" style={{ background: 'var(--emergency)' }} />
+                      {sos.status === 'responding' ? 'Responding' : 'Urgent SOS'}
                     </span>
-                    <span className="text-sm text-[var(--color-text-muted)]">{timeAgo(sos.triggered_at)}</span>
+                    <span className="text-sm text-[var(--text-muted)] font-medium">{timeAgo(sos.triggered_at)}</span>
                   </div>
-                  <h3 className="text-xl font-bold mb-1">{sos.worker?.name ?? 'Unidentified Worker'}</h3>
-                  <p className="text-sm text-[var(--color-text-muted)] flex items-center gap-1 mb-3">
+                  <h3 className="font-serif text-xl font-bold mb-1 text-[var(--text)]">
+                    {sos.worker?.name ?? 'Unidentified Worker'}
+                  </h3>
+                  <p className="text-sm text-[var(--text-muted)] flex items-center gap-1 mb-3">
                     <MapPin size={14} /> {sos.site?.name ?? 'Unknown site'}
                     {sos.latitude != null && sos.longitude != null && (
-                      <span className="font-mono"> ({sos.latitude.toFixed(4)}, {sos.longitude.toFixed(4)})</span>
+                      <span className="font-mono text-xs"> ({sos.latitude.toFixed(4)}, {sos.longitude.toFixed(4)})</span>
                     )}
                   </p>
 
                   {sos.description && (
-                    <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg text-sm text-red-300 mb-3 inline-flex items-center gap-2">
-                      <AlertTriangle size={16} /> {sos.description}
+                    <div
+                      className="p-3 rounded-xl text-sm mb-3 inline-flex items-center gap-2 font-medium"
+                      style={{ background: 'var(--emergency-bg)', border: '1px solid rgba(220,38,38,0.2)', color: 'var(--emergency)' }}
+                    >
+                      <AlertTriangle size={15} /> {sos.description}
                     </div>
                   )}
 
                   {sos.worker && (
-                    <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-muted)]">
-                      <span className="flex items-center gap-1 bg-[var(--color-bg-secondary)] px-2.5 py-1.5 rounded-lg">
-                        <Droplet size={12} /> Blood: <strong>{sos.worker.blood_group || 'N/A'}</strong>
+                    <div className="flex flex-wrap gap-2.5 text-xs text-[var(--text-muted)]">
+                      <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--bg-muted)' }}>
+                        <Droplet size={12} style={{ color: 'var(--emergency)' }} /> Blood: <strong className="text-[var(--text-secondary)]">{sos.worker.blood_group || 'N/A'}</strong>
                       </span>
-                      <span className="flex items-center gap-1 bg-[var(--color-bg-secondary)] px-2.5 py-1.5 rounded-lg">
-                        Medical: <strong>{(sos.worker.medical_conditions ?? []).join(', ') || 'None listed'}</strong>
+                      <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--bg-muted)' }}>
+                        Medical: <strong className="text-[var(--text-secondary)]">{(sos.worker.medical_conditions ?? []).join(', ') || 'None listed'}</strong>
                       </span>
-                      <span className="flex items-center gap-1 bg-[var(--color-bg-secondary)] px-2.5 py-1.5 rounded-lg">
-                        <Phone size={12} /> Emergency: <strong>{sos.worker.emergency_contact_name || 'N/A'} ({sos.worker.emergency_contact_phone || 'N/A'})</strong>
+                      <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--bg-muted)' }}>
+                        <Phone size={12} /> Emergency: <strong className="text-[var(--text-secondary)]">{sos.worker.emergency_contact_name || 'N/A'} ({sos.worker.emergency_contact_phone || 'N/A'})</strong>
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="flex md:flex-col gap-2 md:justify-center shrink-0">
+                <div className="flex md:flex-col gap-2.5 md:justify-center shrink-0">
                   {sos.status === 'triggered' && (
                     <button
                       onClick={() => handleRespond(sos.id)}
-                      className="bg-amber-600 hover:bg-amber-700 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-colors"
+                      className="px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all cursor-pointer"
+                      style={{
+                        background: 'linear-gradient(180deg, #F59E0B, #D97706)',
+                        boxShadow: '0 4px 14px rgba(217, 119, 6, 0.3)',
+                      }}
                     >
                       I'm Responding
                     </button>
                   )}
                   <button
                     onClick={() => handleResolve(sos.id)}
-                    className="bg-emerald-700 hover:bg-emerald-800 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-colors"
+                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all cursor-pointer"
+                    style={{
+                      background: 'linear-gradient(180deg, #16A34A, #15803D)',
+                      boxShadow: '0 4px 14px rgba(22, 163, 74, 0.3)',
+                    }}
                   >
                     Mark Resolved
                   </button>
@@ -181,29 +209,29 @@ export default function SOSResponsePage() {
 
       {/* ── HISTORY ── */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-[var(--color-text-muted)]">Past Events</h3>
+        <h3 className="font-serif text-lg font-bold text-[var(--text)] text-left">Past Events</h3>
         {history.length === 0 ? (
-          <p className="text-sm text-[var(--color-text-muted)]">No past SOS events.</p>
+          <p className="text-sm text-[var(--text-muted)] text-left">No past SOS events.</p>
         ) : (
-          <div className="glass rounded-2xl overflow-hidden">
-            <table className="w-full text-left border-collapse text-sm">
+          <div className="card overflow-hidden p-0">
+            <table className="table-premium w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)]">
-                  <th className="p-3 font-semibold">Worker</th>
-                  <th className="p-3 font-semibold">Site</th>
-                  <th className="p-3 font-semibold">Triggered</th>
-                  <th className="p-3 font-semibold text-right">Outcome</th>
+                <tr>
+                  <th>Worker</th>
+                  <th>Site</th>
+                  <th>Triggered</th>
+                  <th className="text-right">Outcome</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--color-border)]">
+              <tbody>
                 {history.map((sos) => (
                   <tr key={sos.id}>
-                    <td className="p-3 font-medium">{sos.worker?.name ?? 'Unidentified Worker'}</td>
-                    <td className="p-3 text-[var(--color-text-muted)]">{sos.site?.name ?? '—'}</td>
-                    <td className="p-3 text-[var(--color-text-muted)]">{new Date(sos.triggered_at).toLocaleString()}</td>
-                    <td className="p-3 text-right">
+                    <td className="font-semibold text-[var(--text)]">{sos.worker?.name ?? 'Unidentified Worker'}</td>
+                    <td className="text-[var(--text-muted)]">{sos.site?.name ?? '—'}</td>
+                    <td className="text-[var(--text-muted)]">{new Date(sos.triggered_at).toLocaleString()}</td>
+                    <td className="text-right">
                       <span className={`badge ${sos.status === 'resolved' ? 'badge-success' : 'badge-neutral'}`}>
-                        {sos.status.replace('_', ' ').toUpperCase()}
+                        {sos.status.replace('_', ' ')}
                       </span>
                     </td>
                   </tr>

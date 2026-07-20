@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, X, Phone, MapPin, Globe2, ShieldCheck, UserRound } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAlerts } from '@/context/AlertContext';
 import { getAllUsers, createPlatformUser, updateUser, assignSupervisorSite, deleteUserProfile, type UserWithSite } from '@/lib/api/users';
@@ -23,6 +23,21 @@ interface UserForm {
 }
 
 const emptyForm: UserForm = { name: '', email: '', phone: '', password: '', role: 'supervisor', siteId: '' };
+
+/** Deterministic avatar gradient per name — keeps avatars stable between renders */
+const AVATAR_GRADIENTS = [
+  'linear-gradient(135deg, #2563EB, #1E3A8A)',
+  'linear-gradient(135deg, #7C3AED, #4C1D95)',
+  'linear-gradient(135deg, #0891B2, #164E63)',
+  'linear-gradient(135deg, #16A34A, #14532D)',
+  'linear-gradient(135deg, #EA580C, #7C2D12)',
+  'linear-gradient(135deg, #DB2777, #831843)',
+];
+
+function avatarGradient(name: string): string {
+  const hash = name.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
+}
 
 export default function UserManagerPage() {
   const { profile } = useAuth();
@@ -104,10 +119,10 @@ export default function UserManagerPage() {
       }
       setShowModal(false);
       loadData();
-      addToast({ 
-        title: 'Success', 
-        message: editingUser ? 'User profile updated' : 'Platform account created successfully', 
-        type: 'success' 
+      addToast({
+        title: 'Success',
+        message: editingUser ? 'User profile updated' : 'Platform account created successfully',
+        type: 'success'
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save user';
@@ -146,86 +161,116 @@ export default function UserManagerPage() {
 
   return (
     <div className="space-y-6 animate-fade-up">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold mb-1">User Management</h2>
-          <p className="text-[var(--color-text-muted)] text-sm">Manage platform administrators and mill supervisors</p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="text-left">
+          <p className="eyebrow mb-1.5">Access Control</p>
+          <h2 className="page-title">User Management</h2>
+          <p className="page-subtitle">Manage platform administrators and site supervisors</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] z-10" />
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-light)] z-10" />
             <Input
               type="text"
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 w-64"
+              className="pl-10 w-64"
             />
           </div>
-          <Button onClick={openInvite} variant="primary" className="py-2.5 px-4 rounded-xl font-medium">
+          <Button onClick={openInvite} variant="primary" className="py-2.5 px-4">
             <Plus size={16} /> Add User
           </Button>
         </div>
       </div>
 
       {error ? (
-        <Card className="p-8 text-center max-w-lg mx-auto border-red-500/20 bg-red-500/5">
-          <p className="text-red-500 font-semibold">{error}</p>
+        <Card className="p-8 text-center max-w-lg mx-auto" hoverable={false} style={{ borderColor: 'rgba(220,38,38,0.25)', background: 'var(--emergency-bg)' }}>
+          <p className="font-semibold" style={{ color: 'var(--emergency)' }}>{error}</p>
         </Card>
       ) : (
         <Card className="overflow-hidden p-0" hoverable={false}>
           <Table>
             <TableHeader>
-              <TableRow className="bg-[var(--color-bg-secondary)] hover:bg-transparent">
+              <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Phone</TableHead>
-                <TableHead>Assigned Mill</TableHead>
+                <TableHead>Assigned Site</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700">
-                        {user.name.charAt(0)}
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shrink-0 transition-transform duration-200 group-hover:scale-105"
+                        style={{
+                          background: avatarGradient(user.name),
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 6px rgba(11,21,38,0.18)',
+                        }}
+                      >
+                        {user.name.charAt(0).toUpperCase()}
                       </div>
-                      <div>
-                        <p className="font-semibold text-left">{user.name}</p>
-                        <p className="text-xs text-[var(--color-text-muted)] text-left">{user.email}</p>
+                      <div className="text-left">
+                        <p className="font-semibold text-[var(--text)] leading-tight flex items-center gap-1.5">
+                          {user.name}
+                          {user.id === profile?.id && <span className="badge badge-info">You</span>}
+                        </p>
+                        <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{user.email}</p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className={`badge ${user.role === 'admin' ? 'badge-danger' : 'badge-warning'}`}>
+                    <span className={`badge ${user.role === 'admin' ? 'badge-danger' : 'badge-info'}`}>
+                      {user.role === 'admin' ? <ShieldCheck size={11} /> : <UserRound size={11} />}
                       {ROLE_LABELS[user.role] ?? user.role}
                     </span>
                   </TableCell>
-                  <TableCell className="text-[var(--color-text-muted)]">{user.phone || '—'}</TableCell>
-                  <TableCell className="text-[var(--color-text-muted)]">
-                    {user.role === 'admin' ? 'All mills' : user.assigned_site?.name ?? 'Unassigned'}
+                  <TableCell>
+                    <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
+                      <Phone size={12} className="text-[var(--text-light)]" />
+                      {user.phone || '—'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {user.role === 'admin' ? (
+                      <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] font-medium">
+                        <Globe2 size={13} style={{ color: 'var(--info)' }} /> All sites
+                      </span>
+                    ) : user.assigned_site?.name ? (
+                      <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
+                        <MapPin size={13} style={{ color: 'var(--info)' }} /> {user.assigned_site.name}
+                      </span>
+                    ) : (
+                      <span className="badge badge-neutral">Unassigned</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <button
-                      onClick={() => openEdit(user)}
-                      className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)] rounded-lg transition-colors inline-block mr-1 cursor-pointer"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user)}
-                      className="p-2 text-[var(--color-text-muted)] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors inline-block cursor-pointer"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="inline-flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openEdit(user)}
+                        className="btn-icon"
+                        aria-label={`Edit ${user.name}`}
+                      >
+                        <Edit2 size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(user)}
+                        className="btn-icon btn-icon-danger"
+                        aria-label={`Delete ${user.name}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="p-10 text-center text-[var(--color-text-muted)]">
+                  <TableCell colSpan={5} className="p-12 text-center text-[var(--text-muted)]">
                     No users match your search.
                   </TableCell>
                 </TableRow>
@@ -237,12 +282,22 @@ export default function UserManagerPage() {
 
       {/* ── INVITE / EDIT MODAL ── */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-6 z-50 animate-fade-in">
-          <Card className="w-full max-w-md bg-[var(--bg-card)] p-6 space-y-4" hoverable={false}>
-            <div className="flex justify-between items-center border-b border-[var(--border)] pb-3">
-              <h3 className="text-lg font-bold font-serif">{editingUser ? `Edit ${editingUser.name}` : 'Add User'}</h3>
-              <button type="button" onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
-                <X size={20} />
+        <div className="modal-overlay">
+          <Card className="w-full max-w-md p-6 space-y-4 modal-card" hoverable={false}>
+            <div className="flex justify-between items-center border-b border-[var(--border)] pb-4">
+              <div className="text-left">
+                <h3 className="font-serif text-lg font-bold">{editingUser ? `Edit ${editingUser.name}` : 'Add User'}</h3>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  {editingUser ? 'Update profile and site assignment' : 'Create a new platform account'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="btn-icon"
+                aria-label="Close dialog"
+              >
+                <X size={18} />
               </button>
             </div>
 
@@ -264,7 +319,7 @@ export default function UserManagerPage() {
                       value={form.role}
                       onChange={(e) => setForm((p) => ({ ...p, role: e.target.value as UserForm['role'] }))}
                     >
-                      <option value="supervisor">Supervisor — manages one mill</option>
+                      <option value="supervisor">Supervisor — manages one site</option>
                       <option value="admin">Admin — full platform access</option>
                     </Select>
 
@@ -299,7 +354,7 @@ export default function UserManagerPage() {
 
                 {(editingUser ? editingUser.role === 'supervisor' : form.role === 'supervisor') && (
                   <Select
-                    label="Assigned Mill"
+                    label="Assigned Site"
                     id="siteId"
                     value={form.siteId}
                     onChange={(e) => setForm((p) => ({ ...p, siteId: e.target.value }))}
@@ -313,14 +368,19 @@ export default function UserManagerPage() {
               </div>
 
               {formError && (
-                <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-left font-medium">{formError}</p>
+                <p
+                  className="text-sm rounded-xl px-3.5 py-2.5 text-left font-medium animate-scale-up"
+                  style={{ color: 'var(--emergency)', background: 'var(--emergency-bg)', border: '1px solid rgba(220,38,38,0.2)' }}
+                >
+                  {formError}
+                </p>
               )}
 
-              <div className="flex justify-end gap-3 border-t border-[var(--border)] pt-3">
-                <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="py-2.5 px-5 rounded-xl font-medium">
+              <div className="flex justify-end gap-3 border-t border-[var(--border)] pt-4">
+                <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="py-2.5 px-5">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={saving} loading={saving} variant="primary" className="py-2.5 px-5 rounded-xl font-medium">
+                <Button type="submit" disabled={saving} loading={saving} variant="primary" className="py-2.5 px-5">
                   {editingUser ? 'Save Changes' : `Create ${form.role === 'admin' ? 'Admin' : 'Supervisor'}`}
                 </Button>
               </div>
