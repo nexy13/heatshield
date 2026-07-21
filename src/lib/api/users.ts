@@ -76,10 +76,12 @@ export async function createPlatformUser(input: {
   }
 }
 
-/** Update a user's profile fields (admin, or the user themselves) */
+/** Update a user's profile fields (admin, or the user themselves).
+ *  Note: `email` here is the contact/notification address on public.users
+ *  (used for emergency emails); the auth login email is managed separately. */
 export async function updateUser(
   userId: string,
-  updates: Partial<Pick<User, 'name' | 'phone' | 'role' | 'site_id'>>
+  updates: Partial<Pick<User, 'name' | 'phone' | 'role' | 'site_id' | 'email'>>
 ): Promise<User> {
   const { data, error } = await supabase
     .from('users')

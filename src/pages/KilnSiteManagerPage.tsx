@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, X, MapPin, Users, Droplets, Navigation } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, MapPin, Users, Droplets, Navigation } from 'lucide-react';
 import { useAlerts } from '@/context/AlertContext';
 import { getAllSites, createSite, updateSite, deleteSite } from '@/lib/api/sites';
 import { getSiteWorkerCount } from '@/lib/api/workers';
@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { Badge, type BadgeVariant } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import Spinner from '@/components/ui/Spinner';
 
@@ -31,10 +33,10 @@ const emptyForm: SiteForm = {
   status: 'active',
 };
 
-const STATUS_BADGE: Record<string, string> = {
-  active: 'badge-success',
-  inactive: 'badge-neutral',
-  suspended: 'badge-orange',
+const STATUS_BADGE: Record<string, BadgeVariant> = {
+  active: 'success',
+  inactive: 'neutral',
+  suspended: 'orange',
 };
 
 export default function KilnSiteManagerPage() {
@@ -163,7 +165,8 @@ export default function KilnSiteManagerPage() {
       addToast({ title: 'Success', message: 'Site deleted successfully', type: 'success' });
     } catch (err) {
       console.error(err);
-      alert('Failed to delete kiln site.');
+      const msg = err instanceof Error ? err.message : 'Failed to delete kiln site.';
+      addToast({ title: 'Error', message: msg, type: 'error' });
     }
   };
 
@@ -208,6 +211,7 @@ export default function KilnSiteManagerPage() {
         </Card>
       ) : (
         <Card className="overflow-hidden p-0" hoverable={false}>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -226,7 +230,7 @@ export default function KilnSiteManagerPage() {
                     <div className="flex items-center gap-3">
                       <div
                         className="icon-chip transition-transform duration-200 group-hover:scale-110"
-                        style={{ background: 'var(--accent-light)', color: 'var(--info)' }}
+                        style={{ background: 'var(--brand-tint)', color: 'var(--brand)' }}
                       >
                         <MapPin size={16} />
                       </div>
@@ -253,10 +257,9 @@ export default function KilnSiteManagerPage() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span className={`badge ${STATUS_BADGE[site.status] ?? 'badge-neutral'}`}>
-                      {site.status === 'active' && <span className="status-dot" style={{ background: 'var(--safe)' }} />}
+                    <Badge variant={STATUS_BADGE[site.status] ?? 'neutral'} dot={site.status === 'active'}>
                       {site.status}
-                    </span>
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
@@ -287,30 +290,18 @@ export default function KilnSiteManagerPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </Card>
       )}
 
       {/* ── CREATE / EDIT MODAL ── */}
-      {showModal && (
-        <div className="modal-overlay">
-          <Card className="w-full max-w-lg p-6 space-y-4 modal-card" hoverable={false}>
-            <div className="flex justify-between items-center border-b border-[var(--border)] pb-4">
-              <div className="text-left">
-                <h3 className="font-serif text-lg font-bold">{editingSite ? `Edit ${editingSite.name}` : 'Add Kiln Site'}</h3>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  {editingSite ? 'Update site details and operational status' : 'Register a new brick kiln site on the platform'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="btn-icon"
-                aria-label="Close dialog"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        size="lg"
+        title={editingSite ? `Edit ${editingSite.name}` : 'Add Kiln Site'}
+        description={editingSite ? 'Update site details and operational status' : 'Register a new brick kiln site on the platform'}
+      >
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-3">
                 <Input
@@ -394,9 +385,7 @@ export default function KilnSiteManagerPage() {
                 </Button>
               </div>
             </form>
-          </Card>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

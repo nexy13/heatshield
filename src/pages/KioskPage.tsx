@@ -24,6 +24,7 @@ import {
   HardHat,
   CloudSun,
   Users,
+  MessageSquare,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getSiteById } from '@/lib/api/sites';
@@ -743,26 +744,36 @@ export default function KioskPage() {
 
         {/* RIGHT COLUMN: MASSIVE SOS DISPATCH BUTTON + RESPONSE READINESS */}
         <div className="flex flex-col gap-6 h-full min-h-0">
-          <button
-            onClick={handleSosPress}
-            className="kiosk-sos flex-1 min-h-0 w-full flex flex-col items-center justify-center p-10 text-center relative group"
-          >
-            <div className="kiosk-sos-ring mb-8">
-              <ShieldAlert className="w-24 h-24 text-white" style={{ filter: 'drop-shadow(0 0 16px rgba(255,255,255,0.4))' }} />
-            </div>
-            <h2
-              className="font-serif font-extrabold tracking-[0.08em] text-white relative z-10"
-              style={{ fontSize: 'clamp(3.5rem, 7vw, 6.5rem)', lineHeight: 1, textShadow: '0 0 50px rgba(255,255,255,0.35)' }}
+          <div className="kiosk-sos-stage flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-7 relative">
+            <button
+              onClick={handleSosPress}
+              aria-label="Trigger emergency SOS"
+              className="kiosk-sos-btn group"
             >
-              SOS
-            </h2>
-            <p className="text-2xl text-red-100/90 font-bold tracking-wide max-w-sm mt-5 relative z-10 uppercase">
-              Tap here in emergency for instant rescue
-            </p>
-            <p className="text-sm text-red-200/60 font-semibold tracking-[0.22em] uppercase mt-4 relative z-10">
-              Instant SMS to supervisor · GPS shared · Incident logged
-            </p>
-          </button>
+              {/* Emitted sonar waves */}
+              <span className="kiosk-sos-wave" aria-hidden="true" />
+              <span className="kiosk-sos-wave kiosk-sos-wave--2" aria-hidden="true" />
+
+              {/* Glossy 3D red cap */}
+              <span className="kiosk-sos-dome">
+                <span className="kiosk-sos-content">
+                  <ShieldAlert
+                    className="w-11 h-11 text-white mb-1.5"
+                    style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}
+                  />
+                  <span className="kiosk-sos-word font-serif">SOS</span>
+                  <span className="kiosk-sos-tap">Tap for instant rescue</span>
+                </span>
+              </span>
+            </button>
+
+            {/* Guarantee chips */}
+            <div className="flex flex-wrap items-center justify-center gap-2 relative z-10">
+              <span className="kiosk-sos-chip"><MessageSquare size={13} strokeWidth={2.5} /> SMS Supervisor</span>
+              <span className="kiosk-sos-chip"><Satellite size={13} strokeWidth={2.5} /> GPS Shared</span>
+              <span className="kiosk-sos-chip"><CheckCircle size={13} strokeWidth={2.5} /> Incident Logged</span>
+            </div>
+          </div>
 
           {/* Emergency response readiness */}
           <div className="kiosk-panel p-5 shrink-0">

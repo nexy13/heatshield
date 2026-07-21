@@ -53,9 +53,9 @@ export default function SettingsPage() {
               style={
                 activeSection === id
                   ? {
-                      background: 'var(--accent-light)',
-                      color: 'var(--info)',
-                      border: '1px solid rgba(37, 99, 235, 0.2)',
+                      background: 'var(--brand-tint)',
+                      color: 'var(--brand)',
+                      border: '1px solid rgba(37, 99, 235, 0.22)',
                       boxShadow: 'var(--shadow-xs)',
                     }
                   : {

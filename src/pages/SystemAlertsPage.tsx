@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getAllAlerts, getSiteAlerts, acknowledgeAlert } from '@/lib/api/alerts';
 import type { AlertWithDetails } from '@/types/database';
 import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
 import Spinner from '@/components/ui/Spinner';
 
 export default function SystemAlertsPage() {
@@ -76,7 +77,7 @@ export default function SystemAlertsPage() {
           <p className="page-subtitle">
             {role === 'admin' ? 'System-wide alerts across all sites' : 'Alerts for your site'}
             {activeCount > 0 && (
-              <span className="ml-2 badge badge-danger">{activeCount} active</span>
+              <Badge variant="danger" live className="ml-2">{activeCount} active</Badge>
             )}
           </p>
         </div>

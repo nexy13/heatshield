@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, X, Phone, MapPin, Globe2, ShieldCheck, UserRound } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Phone, MapPin, Globe2, ShieldCheck, UserRound } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAlerts } from '@/context/AlertContext';
 import { getAllUsers, createPlatformUser, updateUser, assignSupervisorSite, deleteUserProfile, type UserWithSite } from '@/lib/api/users';
@@ -10,6 +10,8 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import Spinner from '@/components/ui/Spinner';
 
@@ -23,6 +25,8 @@ interface UserForm {
 }
 
 const emptyForm: UserForm = { name: '', email: '', phone: '', password: '', role: 'supervisor', siteId: '' };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Deterministic avatar gradient per name — keeps avatars stable between renders */
 const AVATAR_GRADIENTS = [
@@ -100,10 +104,22 @@ export default function UserManagerPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+
+    // Validate the email format (required for supervisors so they receive
+    // emergency notifications; enforced for all platform accounts).
+    if (!EMAIL_RE.test(form.email.trim())) {
+      setFormError('Please enter a valid email address.');
+      return;
+    }
+
     setSaving(true);
     try {
       if (editingUser) {
-        await updateUser(editingUser.id, { name: form.name, phone: form.phone || null });
+        await updateUser(editingUser.id, {
+          name: form.name,
+          email: form.email.trim(),
+          phone: form.phone || null,
+        });
         if (editingUser.role === 'supervisor') {
           await assignSupervisorSite(editingUser.id, form.siteId || null);
         }
@@ -217,17 +233,17 @@ export default function UserManagerPage() {
                       <div className="text-left">
                         <p className="font-semibold text-[var(--text)] leading-tight flex items-center gap-1.5">
                           {user.name}
-                          {user.id === profile?.id && <span className="badge badge-info">You</span>}
+                          {user.id === profile?.id && <Badge variant="info">You</Badge>}
                         </p>
                         <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{user.email}</p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className={`badge ${user.role === 'admin' ? 'badge-danger' : 'badge-info'}`}>
+                    <Badge variant={user.role === 'admin' ? 'danger' : 'info'}>
                       {user.role === 'admin' ? <ShieldCheck size={11} /> : <UserRound size={11} />}
                       {ROLE_LABELS[user.role] ?? user.role}
-                    </span>
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
@@ -245,7 +261,7 @@ export default function UserManagerPage() {
                         <MapPin size={13} style={{ color: 'var(--info)' }} /> {user.assigned_site.name}
                       </span>
                     ) : (
-                      <span className="badge badge-neutral">Unassigned</span>
+                      <Badge variant="neutral">Unassigned</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -281,26 +297,13 @@ export default function UserManagerPage() {
       )}
 
       {/* ── INVITE / EDIT MODAL ── */}
-      {showModal && (
-        <div className="modal-overlay">
-          <Card className="w-full max-w-md p-6 space-y-4 modal-card" hoverable={false}>
-            <div className="flex justify-between items-center border-b border-[var(--border)] pb-4">
-              <div className="text-left">
-                <h3 className="font-serif text-lg font-bold">{editingUser ? `Edit ${editingUser.name}` : 'Add User'}</h3>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  {editingUser ? 'Update profile and site assignment' : 'Create a new platform account'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="btn-icon"
-                aria-label="Close dialog"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        size="md"
+        title={editingUser ? `Edit ${editingUser.name}` : 'Add User'}
+        description={editingUser ? 'Update profile and site assignment' : 'Create a new platform account'}
+      >
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-3">
                 <Input
@@ -312,41 +315,46 @@ export default function UserManagerPage() {
                 />
 
                 {!editingUser && (
-                  <>
-                    <Select
-                      label="Role"
-                      id="role"
-                      value={form.role}
-                      onChange={(e) => setForm((p) => ({ ...p, role: e.target.value as UserForm['role'] }))}
-                    >
-                      <option value="supervisor">Supervisor — manages one site</option>
-                      <option value="admin">Admin — full platform access</option>
-                    </Select>
-
-                    <Input
-                      label="Email"
-                      id="email"
-                      type="email"
-                      required
-                      value={form.email}
-                      onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                    />
-
-                    <Input
-                      label="Temporary Password"
-                      id="password"
-                      type="text"
-                      required
-                      minLength={8}
-                      placeholder="Min. 8 characters"
-                      value={form.password}
-                      onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-                    />
-                  </>
+                  <Select
+                    label="Role"
+                    id="role"
+                    value={form.role}
+                    onChange={(e) => setForm((p) => ({ ...p, role: e.target.value as UserForm['role'] }))}
+                  >
+                    <option value="supervisor">Supervisor — manages one site</option>
+                    <option value="admin">Admin — full platform access</option>
+                  </Select>
                 )}
 
                 <Input
-                  label="Phone (for SOS SMS)"
+                  label="Email Address"
+                  id="email"
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                />
+                {editingUser && (editingUser.role === 'supervisor') && (
+                  <p className="text-[11px] text-[var(--text-muted)] -mt-2 text-left">
+                    Emergency SOS notifications are emailed to this address.
+                  </p>
+                )}
+
+                {!editingUser && (
+                  <Input
+                    label="Temporary Password"
+                    id="password"
+                    type="text"
+                    required
+                    minLength={8}
+                    placeholder="Min. 8 characters"
+                    value={form.password}
+                    onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                  />
+                )}
+
+                <Input
+                  label="Phone (optional — SOS SMS)"
                   id="phone"
                   value={form.phone}
                   onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
@@ -385,9 +393,7 @@ export default function UserManagerPage() {
                 </Button>
               </div>
             </form>
-          </Card>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

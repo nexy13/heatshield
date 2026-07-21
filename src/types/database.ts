@@ -17,6 +17,18 @@ export type NotificationChannel = 'push' | 'sms' | 'whatsapp' | 'in_app';
 export type ReportedBy = 'self' | 'supervisor' | 'system';
 export type ComplianceGrade = 'A' | 'B' | 'C' | 'D' | 'F';
 
+// Emergency response timeline
+export type ResponseEventType =
+  | 'SOS_TRIGGERED'
+  | 'LOCATION_CAPTURED'
+  | 'HEAT_INDEX_RECORDED'
+  | 'SMS_SENT'
+  | 'EMAIL_SENT'
+  | 'SUPERVISOR_ACKNOWLEDGED'
+  | 'RESCUE_DISPATCHED'
+  | 'WORKER_SAFE';
+export type ResponseStepStatus = 'completed' | 'current' | 'pending' | 'failed';
+
 // ---- Table Row Types ----
 
 export interface User {
@@ -131,6 +143,16 @@ export interface SOSEvent {
   responded_by: string | null;
   triggered_at: string;
   resolved_at: string | null;
+}
+
+export interface SOSResponseEvent {
+  id: string;
+  incident_id: string;
+  event: ResponseEventType;
+  status: ResponseStepStatus;
+  details: Record<string, unknown> | null;
+  event_at: string;
+  created_at: string;
 }
 
 export interface HydrationLog {

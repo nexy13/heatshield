@@ -25,6 +25,7 @@ import type { KilnSite, WeatherReading, AlertWithDetails, SOSEventWithDetails, W
 import { RISK_LEVELS } from '@/lib/utils/constants';
 import WorkerIntakeForm from '@/components/worker/WorkerIntakeForm';
 import Spinner from '@/components/ui/Spinner';
+import { Badge } from '@/components/ui/Badge';
 
 export default function SupervisorDashboard() {
   const { profile } = useAuth();
@@ -166,25 +167,35 @@ export default function SupervisorDashboard() {
     currentRisk === 'moderate' ? 'var(--caution)' : 'var(--safe)';
 
   return (
-    <div className="space-y-8 animate-fade-up">
-      {/* ── HEADER ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div className="text-left">
-          <p className="eyebrow mb-1.5 flex items-center gap-2">
-            <span className="pulse-dot" style={{ background: riskAccent }} />
-            Live · Supervisor Portal
-          </p>
-          <h2 className="page-title">{site?.name}</h2>
-          <p className="page-subtitle">Real-time safety control for your site</p>
-        </div>
+    <div className="space-y-6 animate-fade-up">
+      {/* ── HERO HEADER (control-room) ── */}
+      <div
+        className="relative overflow-hidden rounded-2xl p-6 lg:p-7"
+        style={{ background: 'linear-gradient(135deg, var(--navy-900), var(--navy-850))', boxShadow: 'var(--shadow-lg)' }}
+      >
+        <div aria-hidden="true" className="absolute rounded-full" style={{ width: 360, height: 360, top: '-40%', right: '-8%', background: 'radial-gradient(circle, rgba(37,99,235,0.28), transparent 68%)' }} />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="text-left">
+            <p className="mb-2 flex items-center gap-2 font-semibold uppercase" style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.14em', color: '#93C5FD' }}>
+              <span className="pulse-dot" style={{ background: riskAccent, width: 7, height: 7 }} />
+              Live · Supervisor Portal
+            </p>
+            <h2 className="font-serif font-bold text-white leading-tight" style={{ fontSize: 'clamp(1.6rem, 3vw, 2rem)', letterSpacing: '-0.02em' }}>
+              {site?.name}
+            </h2>
+            <p className="mt-1.5" style={{ fontSize: 'var(--text-sm)', color: 'rgba(226,232,240,0.72)' }}>
+              Real-time safety control for your site.
+            </p>
+          </div>
 
-        <Link
-          to={`/kiosk/${siteId}`}
-          target="_blank"
-          className="btn-primary px-4 py-2.5 text-sm"
-        >
-          <MonitorPlay size={16} /> Open Kiosk Display
-        </Link>
+          <Link
+            to={`/kiosk/${siteId}`}
+            target="_blank"
+            className="btn-primary px-4 py-2.5 text-sm shrink-0"
+          >
+            <MonitorPlay size={16} /> Open Kiosk Display
+          </Link>
+        </div>
       </div>
 
       {/* ── ALERTS & SOS NOTIFICATION ── */}
@@ -338,7 +349,7 @@ export default function SupervisorDashboard() {
           <div className="text-left">
             <h3 className="font-serif text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <Users size={18} style={{ color: 'var(--info)' }} /> Workers Roster
-              <span className="badge badge-info">{workers.length}</span>
+              <Badge variant="info">{workers.length}</Badge>
             </h3>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">Manage details of workers assigned to this site</p>
           </div>

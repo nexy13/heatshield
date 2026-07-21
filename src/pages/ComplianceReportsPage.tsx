@@ -1,6 +1,7 @@
 import { Shield, FileText, Download } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 
 const mockReports = [
@@ -11,10 +12,10 @@ const mockReports = [
   { id: '5', site: 'Chandapura Brick Industries', date: '2026-07-19', grade: 'C', workers: 18, issues: 4 },
 ];
 
-const GRADE_BADGE: Record<string, string> = {
-  A: 'badge-success',
-  B: 'badge-info',
-  C: 'badge-warning',
+const GRADE_BADGE: Record<string, BadgeVariant> = {
+  A: 'success',
+  B: 'info',
+  C: 'warning',
 };
 
 export default function ComplianceReportsPage() {
@@ -32,6 +33,7 @@ export default function ComplianceReportsPage() {
       </div>
 
       <Card className="overflow-hidden p-0" hoverable={false}>
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -50,9 +52,9 @@ export default function ComplianceReportsPage() {
                 <TableCell className="font-semibold text-left text-[var(--text)]">{report.site}</TableCell>
                 <TableCell className="text-[var(--text-secondary)]">{report.workers}</TableCell>
                 <TableCell>
-                  <span className={`badge ${GRADE_BADGE[report.grade] ?? 'badge-danger'}`}>
+                  <Badge variant={GRADE_BADGE[report.grade] ?? 'danger'}>
                     Grade {report.grade}
-                  </span>
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   {report.issues > 0 ? (
@@ -77,6 +79,7 @@ export default function ComplianceReportsPage() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </Card>
     </div>
   );

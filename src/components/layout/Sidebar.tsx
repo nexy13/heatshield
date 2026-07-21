@@ -51,46 +51,20 @@ export default function Sidebar() {
     <>
       {/* Logo */}
       <div
-        className="px-5 py-5 flex items-center gap-3"
-        style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.1)', marginBottom: '0.875rem' }}
+        className="flex items-center gap-3 px-5"
+        style={{ paddingTop: 'var(--space-5)', paddingBottom: 'var(--space-5)', borderBottom: '1px solid rgba(148, 163, 184, 0.1)', marginBottom: 'var(--space-3)' }}
       >
         <div
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 10,
-            background: 'linear-gradient(135deg, #2563EB, #1B2E52)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
-          }}
+          className="flex items-center justify-center shrink-0"
+          style={{ width: 34, height: 34, borderRadius: 'var(--radius-md)', background: 'var(--brand-panel)', boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)' }}
         >
           <Shield size={17} color="#fff" strokeWidth={2.25} />
         </div>
         <div>
-          <h1
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '0.9375rem',
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              color: '#F8FAFC',
-              lineHeight: 1.1,
-            }}
-          >
+          <h1 className="font-serif font-bold" style={{ fontSize: 'var(--text-sm)', letterSpacing: '0.06em', color: '#F8FAFC', lineHeight: 1.1 }}>
             HEATSHIELD
           </h1>
-          <p
-            style={{
-              fontSize: '0.6rem',
-              color: 'rgba(148, 163, 184, 0.85)',
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              marginTop: 3,
-              fontWeight: 500,
-            }}
-          >
+          <p style={{ fontSize: '0.6rem', color: 'rgba(148, 163, 184, 0.85)', letterSpacing: '0.16em', textTransform: 'uppercase', marginTop: 3, fontWeight: 600 }}>
             Worker Safety OS
           </p>
         </div>
@@ -99,41 +73,20 @@ export default function Sidebar() {
       {/* Role badge */}
       {profile && (
         <div
-          className="mx-4 mb-4 px-3.5 py-3 rounded-xl flex items-center gap-3"
-          style={{
-            background: 'rgba(148, 163, 184, 0.06)',
-            border: '1px solid rgba(148, 163, 184, 0.12)',
-          }}
+          className="mx-4 flex items-center gap-3 rounded-xl px-3.5 py-3"
+          style={{ marginBottom: 'var(--space-4)', background: 'rgba(148, 163, 184, 0.06)', border: '1px solid rgba(148, 163, 184, 0.12)' }}
         >
           <div
-            className="flex items-center justify-center shrink-0"
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(27, 46, 82, 0.6))',
-              border: '1px solid rgba(147, 197, 253, 0.25)',
-              color: '#BFDBFE',
-              fontWeight: 700,
-              fontSize: '0.8125rem',
-            }}
+            className="flex items-center justify-center shrink-0 font-bold"
+            style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.4), rgba(27, 46, 82, 0.6))', border: '1px solid rgba(147, 197, 253, 0.25)', color: '#BFDBFE', fontSize: 'var(--text-sm)' }}
           >
             {profile.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold truncate" style={{ color: '#E2E8F0', lineHeight: 1.3 }}>
+            <p className="font-semibold truncate" style={{ fontSize: 'var(--text-sm)', color: '#E2E8F0', lineHeight: 1.3 }}>
               {profile.name}
             </p>
-            <p
-              style={{
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: '#60A5FA',
-                marginTop: 1,
-              }}
-            >
+            <p style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#60A5FA', marginTop: 1 }}>
               {ROLE_LABELS[role ?? ''] ?? role}
             </p>
           </div>
@@ -142,16 +95,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-        <p
-          className="px-3 pb-2"
-          style={{
-            fontSize: '0.6rem',
-            fontWeight: 600,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            color: 'rgba(100, 116, 139, 0.9)',
-          }}
-        >
+        <p className="px-3 pb-2" style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(100, 116, 139, 0.9)' }}>
           Menu
         </p>
         {links.map((link) => (
@@ -178,11 +122,7 @@ export default function Sidebar() {
           <Settings size={16} />
           <span>Settings</span>
         </NavLink>
-        <button
-          onClick={() => signOut()}
-          className="sidebar-link w-full"
-          style={{ color: '#FCA5A5' }}
-        >
+        <button onClick={() => signOut()} className="sidebar-link w-full" style={{ color: '#FCA5A5' }}>
           <LogOut size={16} />
           <span>Sign Out</span>
         </button>
@@ -196,12 +136,7 @@ export default function Sidebar() {
       <button
         onClick={() => setMobileOpen(true)}
         className="fixed top-4 left-4 z-50 lg:hidden rounded-xl p-2.5 cursor-pointer"
-        style={{
-          background: 'var(--navy-900)',
-          color: '#E2E8F0',
-          boxShadow: 'var(--shadow-md)',
-          border: '1px solid rgba(148, 163, 184, 0.15)',
-        }}
+        style={{ background: 'var(--navy-900)', color: '#E2E8F0', boxShadow: 'var(--shadow-md)', border: '1px solid rgba(148, 163, 184, 0.15)' }}
         aria-label="Open navigation"
       >
         <Menu size={20} />
@@ -224,7 +159,7 @@ export default function Sidebar() {
       >
         <button
           onClick={() => setMobileOpen(false)}
-          className="absolute top-4 right-4 cursor-pointer"
+          className="absolute top-4 right-4 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)] rounded-md"
           style={{ color: 'rgba(148, 163, 184, 0.8)' }}
           aria-label="Close navigation"
         >

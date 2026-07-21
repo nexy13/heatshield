@@ -10,6 +10,7 @@ import {
   resolveSOS,
 } from '@/lib/api/sos';
 import type { SOSEventWithDetails } from '@/types/database';
+import { Badge } from '@/components/ui/Badge';
 import Spinner from '@/components/ui/Spinner';
 
 function timeAgo(iso: string): string {
@@ -137,10 +138,9 @@ export default function SOSResponsePage() {
               <div className="flex flex-col md:flex-row gap-6 justify-between">
                 <div className="flex-1 text-left">
                   <div className="flex items-center gap-3 mb-2.5">
-                    <span className="badge badge-danger badge-live">
-                      <span className="status-dot" style={{ background: 'var(--emergency)' }} />
+                    <Badge variant="danger" live dot>
                       {sos.status === 'responding' ? 'Responding' : 'Urgent SOS'}
-                    </span>
+                    </Badge>
                     <span className="text-sm text-[var(--text-muted)] font-medium">{timeAgo(sos.triggered_at)}</span>
                   </div>
                   <h3 className="font-serif text-xl font-bold mb-1 text-[var(--text)]">
@@ -230,9 +230,9 @@ export default function SOSResponsePage() {
                     <td className="text-[var(--text-muted)]">{sos.site?.name ?? '—'}</td>
                     <td className="text-[var(--text-muted)]">{new Date(sos.triggered_at).toLocaleString()}</td>
                     <td className="text-right">
-                      <span className={`badge ${sos.status === 'resolved' ? 'badge-success' : 'badge-neutral'}`}>
+                      <Badge variant={sos.status === 'resolved' ? 'success' : 'neutral'}>
                         {sos.status.replace('_', ' ')}
-                      </span>
+                      </Badge>
                     </td>
                   </tr>
                 ))}

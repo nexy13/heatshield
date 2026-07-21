@@ -42,43 +42,20 @@ export async function getWorkerById(workerId: string): Promise<Worker | null> {
   return data;
 }
 
-/** Create worker */
+/** Create worker.
+ *  Workers are field laborers with NO login account — they live only in
+ *  public.workers, never in public.users (which is reserved for auth-backed
+ *  admin/supervisor accounts created via Supabase Auth signup). */
 export async function createWorker(
   worker: Omit<Worker, 'id' | 'created_at'>
 ): Promise<Worker> {
-  const id = crypto.randomUUID();
-  const email = `${id}@heatshield.local`;
-
-  // Insert into public.users table (no auth row)
-  const { error: userError } = await supabase
-    .from('users')
-    .insert({
-      id,
-      name: worker.name,
-      email,
-      phone: worker.phone,
-      role: 'worker' as any,
-      site_id: worker.site_id,
-      health_flags: worker.medical_conditions || []
-    });
-
-  if (userError) throw userError;
-
-  // Insert into public.workers table
   const { data, error } = await supabase
     .from('workers')
-    .insert({
-      id,
-      ...worker
-    })
+    .insert(worker)
     .select()
     .single();
 
-  if (error) {
-    // Rollback user creation on worker failure
-    await supabase.from('users').delete().eq('id', id);
-    throw error;
-  }
+  if (error) throw error;
   return data;
 }
 
@@ -95,24 +72,6 @@ export async function updateWorker(
     .single();
 
   if (error) throw error;
-
-  // Sync details to public.users table
-  const userUpdates: any = {};
-  if (updates.name !== undefined) userUpdates.name = updates.name;
-  if (updates.phone !== undefined) userUpdates.phone = updates.phone;
-  if (updates.site_id !== undefined) userUpdates.site_id = updates.site_id;
-  if (updates.medical_conditions !== undefined) userUpdates.health_flags = updates.medical_conditions;
-
-  if (Object.keys(userUpdates).length > 0) {
-    const { error: userError } = await supabase
-      .from('users')
-      .update(userUpdates)
-      .eq('id', workerId);
-    if (userError) {
-      console.error('Failed to sync worker update to users table:', userError);
-    }
-  }
-
   return data;
 }
 
@@ -124,15 +83,6 @@ export async function deleteWorker(workerId: string): Promise<void> {
     .eq('id', workerId);
 
   if (error) throw error;
-
-  // Cleanup matching user record
-  const { error: userError } = await supabase
-    .from('users')
-    .delete()
-    .eq('id', workerId);
-  if (userError) {
-    console.error('Failed to cleanup user record for worker:', userError);
-  }
 }
 
 /** Get active worker count for a site */
@@ -147,44 +97,14 @@ export async function getSiteWorkerCount(siteId: string): Promise<number> {
   return count ?? 0;
 }
 
-/** Bulk insert workers */
+/** Bulk insert workers (roster CSV import).
+ *  Like createWorker, these go only into public.workers — no login accounts. */
 export async function bulkInsertWorkers(workers: Omit<Worker, 'id' | 'created_at'>[]): Promise<Worker[]> {
-  const workerInserts = workers.map(w => {
-    const id = crypto.randomUUID();
-    return {
-      id,
-      worker: { id, ...w },
-      user: {
-        id,
-        name: w.name,
-        email: `${id}@heatshield.local`,
-        phone: w.phone || null,
-        role: 'worker' as any,
-        site_id: w.site_id,
-        health_flags: w.medical_conditions || []
-      }
-    };
-  });
-
-  const usersPayload = workerInserts.map(x => x.user);
-  const workersPayload = workerInserts.map(x => x.worker);
-
-  const { error: usersError } = await supabase
-    .from('users')
-    .insert(usersPayload);
-
-  if (usersError) throw usersError;
-
-  const { data, error: workersError } = await supabase
+  const { data, error } = await supabase
     .from('workers')
-    .insert(workersPayload)
+    .insert(workers)
     .select();
 
-  if (workersError) {
-    const ids = workerInserts.map(x => x.id);
-    await supabase.from('users').delete().in('id', ids);
-    throw workersError;
-  }
-
+  if (error) throw error;
   return data ?? [];
 }

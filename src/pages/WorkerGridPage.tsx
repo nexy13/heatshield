@@ -6,11 +6,12 @@ import { useAlerts } from '@/context/AlertContext';
 import { getAllWorkers, getSiteWorkers, type WorkerWithSiteName } from '@/lib/api/workers';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 import Spinner from '@/components/ui/Spinner';
 
-const STATUS_BADGE: Record<string, string> = {
-  active: 'badge-success',
-  on_leave: 'badge-info',
+const STATUS_BADGE: Record<string, BadgeVariant> = {
+  active: 'success',
+  on_leave: 'info',
 };
 
 export default function WorkerGridPage() {
@@ -58,7 +59,7 @@ export default function WorkerGridPage() {
         <div className="text-left">
           <p className="eyebrow mb-1.5">Workforce</p>
           <h2 className="page-title flex items-center gap-2.5">
-            Worker Roster <span className="badge badge-info">{workers.length}</span>
+            Worker Roster <Badge variant="info">{workers.length}</Badge>
           </h2>
           <p className="page-subtitle">
             {role === 'admin' ? 'All workers across every site' : 'Workers registered at your site'}
@@ -115,9 +116,9 @@ export default function WorkerGridPage() {
                     </p>
                   </div>
                 </div>
-                <span className={`badge ${STATUS_BADGE[worker.status] ?? 'badge-neutral'}`}>
+                <Badge variant={STATUS_BADGE[worker.status] ?? 'neutral'}>
                   {worker.status.replace('_', ' ')}
-                </span>
+                </Badge>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-sm">

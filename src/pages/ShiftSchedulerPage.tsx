@@ -1,4 +1,5 @@
 import { CalendarClock, Plus, Users, Clock, Edit2, Trash2 } from 'lucide-react';
+import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 
 const mockShifts = [
   { id: '1', date: '2026-07-20', time: '06:00 - 14:00', type: 'Morning', assigned: 42, status: 'Active' },
@@ -6,10 +7,10 @@ const mockShifts = [
   { id: '3', date: '2026-07-21', time: '06:00 - 14:00', type: 'Morning', assigned: 28, status: 'Scheduled' },
 ];
 
-const STATUS_STYLE: Record<string, { badge: string; accent: string }> = {
-  Active: { badge: 'badge-success', accent: 'var(--safe)' },
-  Upcoming: { badge: 'badge-info', accent: 'var(--info)' },
-  Scheduled: { badge: 'badge-neutral', accent: 'var(--text-light)' },
+const STATUS_STYLE: Record<string, { variant: BadgeVariant; accent: string }> = {
+  Active: { variant: 'success', accent: 'var(--safe)' },
+  Upcoming: { variant: 'info', accent: 'var(--info)' },
+  Scheduled: { variant: 'neutral', accent: 'var(--text-light)' },
 };
 
 export default function ShiftSchedulerPage() {
@@ -42,15 +43,14 @@ export default function ShiftSchedulerPage() {
               />
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-2.5">
-                  <span className="icon-chip" style={{ width: 34, height: 34, background: 'var(--accent-light)', color: 'var(--info)' }}>
+                  <span className="icon-chip" style={{ width: 34, height: 34, background: 'var(--brand-tint)', color: 'var(--brand)' }}>
                     <CalendarClock size={16} />
                   </span>
                   <span className="font-mono font-bold text-sm text-[var(--text)]">{shift.date}</span>
                 </div>
-                <span className={`badge ${style.badge}`}>
-                  {shift.status === 'Active' && <span className="status-dot" style={{ background: 'var(--safe)' }} />}
+                <Badge variant={style.variant} dot={shift.status === 'Active'}>
                   {shift.status}
-                </span>
+                </Badge>
               </div>
 
               <h3 className="font-serif text-lg font-bold mb-1 text-left text-[var(--text)]">{shift.type} Shift</h3>

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, Lock, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, Loader2, Eye, EyeOff, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 /**
  * Landing page for the password-recovery email link.
@@ -44,159 +46,147 @@ export default function ResetPasswordPage() {
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    paddingLeft: '2.5rem',
-    paddingRight: '2.75rem',
-    borderRadius: '4px',
-    background: 'rgba(255,255,255,0.7)',
-    borderColor: 'rgba(27, 77, 62, 0.15)',
-  };
+  const passwordToggle = (
+    <button
+      type="button"
+      onClick={() => setShowPassword((v) => !v)}
+      aria-label={showPassword ? 'Hide password' : 'Show password'}
+      className="flex p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--text)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)]"
+    >
+      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
+  );
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem 1.5rem',
-      background: 'var(--bg)',
-    }}>
-      <div
-        className="animate-fade-up"
-        style={{
-          width: '100%',
-          maxWidth: '440px',
-          background: 'var(--bg-white)',
-          border: '1px solid var(--border)',
-          borderRadius: '18px',
-          boxShadow: 'var(--shadow-lg)',
-          padding: '2.5rem 2.25rem',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-            <div style={{ width: 24, height: 24, borderRadius: 5, background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Shield size={12} color="#fff" />
-            </div>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.06em', color: 'var(--text)' }}>
-              HEATSHIELD
-            </span>
-          </Link>
-        </div>
-
-        <h2 style={{
-          fontFamily: 'var(--font-serif)',
-          fontSize: '1.875rem',
-          fontWeight: 400,
-          color: 'var(--text)',
-          textAlign: 'center',
-          letterSpacing: '-0.015em',
-          marginBottom: '0.75rem',
-          lineHeight: 1.2,
-        }}>
-          Set a new password
-        </h2>
-
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
-            <Loader2 size={22} className="animate-spin" style={{ color: 'var(--text-muted)' }} />
-          </div>
-        ) : !authUser ? (
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '1.5rem' }}>
-              This page only works when opened from a password-reset email link,
-              and links expire after a short time. Request a fresh link from the
-              login page.
-            </p>
-            <Link to="/login" className="btn-primary" style={{ justifyContent: 'center' }}>
-              Back to Login
+    <div
+      className="min-h-screen w-full flex items-center justify-center px-6 py-10"
+      style={{
+        background:
+          'radial-gradient(900px 520px at 50% -10%, var(--brand-tint), transparent 60%), var(--bg)',
+      }}
+    >
+      <div className="w-full max-w-md">
+        <div
+          className="rounded-2xl p-8 animate-fade-up"
+          style={{ background: 'var(--bg-white)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
+        >
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <Link to="/" className="flex items-center gap-2.5 no-underline" aria-label="HeatShield home">
+              <span
+                className="flex items-center justify-center rounded-xl"
+                style={{ width: 34, height: 34, background: 'var(--brand-panel)', boxShadow: '0 6px 16px rgba(37,99,235,0.35)' }}
+              >
+                <Shield size={17} color="#fff" strokeWidth={2.25} />
+              </span>
+              <span className="font-serif font-bold tracking-[0.08em] text-[var(--text)]" style={{ fontSize: 'var(--text-base)' }}>
+                HEATSHIELD
+              </span>
             </Link>
           </div>
-        ) : done ? (
-          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-            <CheckCircle2 size={36} style={{ color: 'var(--accent-teal)', margin: '0 auto 0.75rem' }} />
-            <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)' }}>
-              Password updated. Taking you to your dashboard…
-            </p>
-          </div>
-        ) : (
-          <>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', textAlign: 'center', marginBottom: '1.75rem' }}>
-              Resetting password for <strong style={{ color: 'var(--text-secondary)' }}>{authUser.email}</strong>
-            </p>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {[
-                { label: 'New password', value: password, set: setPassword },
-                { label: 'Confirm new password', value: confirm, set: setConfirm },
-              ].map(({ label, value, set }) => (
-                <div key={label}>
-                  <label style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
-                    {label}
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <Lock size={14} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={value}
-                      onChange={(e) => set(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      minLength={8}
-                      className="input-field"
-                      style={inputStyle}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      style={{
-                        position: 'absolute',
-                        right: '0.625rem',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: '0.25rem',
-                        display: 'flex',
-                        color: 'var(--text-muted)',
-                      }}
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
+          <h1
+            className="font-serif font-bold text-[var(--text)] text-center leading-tight"
+            style={{ fontSize: 'var(--text-3xl)', letterSpacing: '-0.02em' }}
+          >
+            Set a new password
+          </h1>
+
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 size={22} className="animate-spin text-[var(--text-muted)]" />
+            </div>
+          ) : !authUser ? (
+            <div className="text-center mt-4">
+              <p className="text-[var(--text-muted)] leading-relaxed mb-6" style={{ fontSize: 'var(--text-sm)' }}>
+                This page only works when opened from a password-reset email link,
+                and links expire after a short time. Request a fresh link from the login page.
+              </p>
+              <Link to="/login" className="btn-primary w-full justify-center" style={{ padding: '0.75rem 1.75rem' }}>
+                <ArrowLeft size={15} /> Back to Login
+              </Link>
+            </div>
+          ) : done ? (
+            <div className="text-center py-4 mt-2 animate-scale-up">
+              <CheckCircle2 size={40} className="mx-auto mb-3" style={{ color: 'var(--safe)' }} />
+              <p className="text-[var(--text-secondary)]" style={{ fontSize: 'var(--text-base)' }}>
+                Password updated. Taking you to your dashboard…
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="text-center text-[var(--text-muted)] mt-2 mb-6" style={{ fontSize: 'var(--text-sm)' }}>
+                Resetting password for <strong className="text-[var(--text-secondary)]">{authUser.email}</strong>
+              </p>
+
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <Input
+                  label="New password"
+                  id="new-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  leftIcon={<Lock size={16} />}
+                  trailing={passwordToggle}
+                />
+
+                <Input
+                  label="Confirm new password"
+                  id="confirm-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  leftIcon={<Lock size={16} />}
+                  trailing={passwordToggle}
+                />
+
+                {error && (
+                  <div
+                    className="flex items-start gap-2.5 rounded-xl px-4 py-3 font-medium animate-scale-up"
+                    style={{ background: 'var(--emergency-bg)', border: '1px solid rgba(220,38,38,0.22)', color: 'var(--emergency)', fontSize: 'var(--text-sm)', lineHeight: 1.5 }}
+                    role="alert"
+                  >
+                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                    <span>{error}</span>
                   </div>
-                </div>
-              ))}
-
-              {error && (
-                <div style={{
-                  padding: '0.75rem 1rem',
-                  borderRadius: '4px',
-                  background: 'rgba(185, 28, 28, 0.06)',
-                  border: '1px solid rgba(185, 28, 28, 0.2)',
-                  fontSize: '0.8125rem',
-                  color: '#B91C1C',
-                }}>
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={saving}
-                className="btn-primary"
-                style={{ justifyContent: 'center', width: '100%', padding: '0.75rem 1.75rem', fontSize: '0.875rem' }}
-              >
-                {saving ? (
-                  <><Loader2 size={16} className="animate-spin" /> Saving…</>
-                ) : (
-                  'Update Password'
                 )}
-              </button>
-            </form>
-          </>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={saving}
+                  className="w-full justify-center mt-1"
+                  style={{ padding: '0.8125rem 1.75rem', fontSize: 'var(--text-sm)' }}
+                >
+                  {saving ? (
+                    <span className="inline-flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Saving…</span>
+                  ) : (
+                    'Update Password'
+                  )}
+                </Button>
+              </form>
+            </>
+          )}
+        </div>
+
+        {authUser && !done && (
+          <p className="text-center mt-5">
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)] rounded-md px-1"
+              style={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}
+            >
+              <ArrowLeft size={14} /> Back to Login
+            </Link>
+          </p>
         )}
       </div>
     </div>

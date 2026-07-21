@@ -11,29 +11,27 @@ export default function NotFoundPage() {
 
       <div className="text-center relative z-10 animate-fade-up">
         <div
-          className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6"
-          style={{
-            background: 'linear-gradient(135deg, var(--accent-light), var(--bg-white))',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-md)',
-          }}
+          className="flex items-center justify-center mx-auto mb-6"
+          style={{ width: 72, height: 72, borderRadius: 'var(--radius-xl)', background: 'var(--brand-panel)', boxShadow: '0 12px 30px rgba(37,99,235,0.35)' }}
         >
-          <Shield size={38} style={{ color: 'var(--info)' }} />
+          <Shield size={34} color="#fff" strokeWidth={2.25} />
         </div>
-        <h1 className="font-serif text-7xl font-bold gradient-text mb-4">404</h1>
-        <h2 className="font-serif text-2xl font-bold mb-2 text-[var(--text)]">Page not found</h2>
-        <p className="text-[var(--text-muted)] max-w-md mx-auto mb-8">
+        <h1
+          className="font-serif font-bold mb-3"
+          style={{ fontSize: 'clamp(4rem, 12vw, 6rem)', lineHeight: 1, letterSpacing: '-0.03em', background: 'linear-gradient(90deg, var(--accent-grad-from), var(--accent-grad-to))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}
+        >
+          404
+        </h1>
+        <h2 className="font-serif font-bold mb-2 text-[var(--text)]" style={{ fontSize: 'var(--text-2xl)' }}>Page not found</h2>
+        <p className="text-[var(--text-muted)] max-w-md mx-auto mb-8" style={{ fontSize: 'var(--text-base)' }}>
           The page you're looking for doesn't exist or has been moved.
         </p>
-        <div className="flex gap-3 justify-center">
-          <Link to="/" className="btn-primary px-6 py-3">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link to="/" className="btn-primary justify-center px-6 py-3">
             <Home size={16} />
             Go Home
           </Link>
-          <button
-            onClick={() => window.history.back()}
-            className="btn-secondary px-6 py-3"
-          >
+          <button onClick={() => window.history.back()} className="btn-secondary justify-center px-6 py-3">
             <ArrowLeft size={16} />
             Go Back
           </button>

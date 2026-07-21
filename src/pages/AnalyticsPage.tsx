@@ -1,6 +1,85 @@
-import { TrendingUp, Thermometer, Droplets, ShieldAlert } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { TrendingUp, Thermometer, Droplets, ShieldAlert, Timer, MessageSquare, Siren, CheckCircle2, AlertTriangle } from 'lucide-react';
 import StatsGrid from '@/components/dashboard/StatsGrid';
 import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { getRecentIncidents, type IncidentView } from '@/lib/api/sosTimeline';
+import { useRealtime } from '@/hooks/useRealtime';
+
+function fmtSecs(s: number | null): string {
+  if (s == null) return '—';
+  if (s < 90) return `${Math.round(s)}s`;
+  return `${(s / 60).toFixed(1)} min`;
+}
+
+function isToday(iso: string | null): boolean {
+  if (!iso) return false;
+  return new Date(iso).toDateString() === new Date().toDateString();
+}
+
+function mean(nums: number[]): number | null {
+  if (nums.length === 0) return null;
+  return nums.reduce((a, b) => a + b, 0) / nums.length;
+}
+
+/** Emergency-response KPIs derived live from SOS incidents + their timelines. */
+function EmergencyKPIs() {
+  const [incidents, setIncidents] = useState<IncidentView[]>([]);
+
+  const load = async () => {
+    try {
+      setIncidents(await getRecentIncidents(50));
+    } catch (err) {
+      console.error('Failed to load emergency analytics:', err);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+  useRealtime({ table: 'sos_events', onData: load });
+  useRealtime({ table: 'sos_response_events', onData: load });
+
+  const responseTimes = incidents
+    .map((i) => i.responseSeconds)
+    .filter((v): v is number => v != null);
+  const smsTimes = incidents
+    .map((i) => {
+      const sms = i.events.find((e) => e.event === 'SMS_SENT' && e.status === 'completed');
+      const t = sms?.details?.delivery_time_sec;
+      return typeof t === 'number' ? t : null;
+    })
+    .filter((v): v is number => v != null);
+
+  const avgResponse = mean(responseTimes);
+  const avgSms = mean(smsTimes);
+  const sosToday = incidents.filter((i) => isToday(i.triggeredAt)).length;
+  const resolvedToday = incidents.filter((i) => i.status === 'resolved' && isToday(i.resolvedAt)).length;
+  const pending = incidents.filter((i) => i.status !== 'resolved').length;
+
+  return (
+    <div className="space-y-4">
+      <div className="text-left">
+        <h3 className="font-serif text-lg font-bold text-[var(--text)] flex items-center gap-2">
+          <span className="icon-chip" style={{ width: 30, height: 30, background: 'var(--emergency-bg)', color: 'var(--emergency)' }}>
+            <Siren size={15} />
+          </span>
+          Emergency response
+        </h3>
+        <p className="text-xs text-[var(--text-muted)] mt-0.5">Live SOS workflow performance across every site</p>
+      </div>
+      <StatsGrid
+        stats={[
+          { label: 'Avg Response Time', value: fmtSecs(avgResponse), icon: Timer, color: '#2563EB' },
+          { label: 'Avg SMS Delivery', value: fmtSecs(avgSms), icon: MessageSquare, color: '#16A34A' },
+          { label: 'SOS Today', value: sosToday, icon: Siren, color: '#DC2626' },
+          { label: 'Resolved Today', value: resolvedToday, icon: CheckCircle2, color: '#16A34A' },
+          { label: 'Pending Emergencies', value: pending, icon: AlertTriangle, color: pending > 0 ? '#EA580C' : '#64748B' },
+        ]}
+      />
+    </div>
+  );
+}
 
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const HEAT_DATA = [61, 64, 66, 68, 67, 65, 63];
@@ -23,6 +102,8 @@ export default function AnalyticsPage() {
         <p className="page-subtitle">System-wide trends and heat exposure metrics</p>
       </div>
 
+      <EmergencyKPIs />
+
       <StatsGrid
         stats={[
           { label: 'Avg Compliance Score', value: '91%', icon: TrendingUp, color: '#16A34A', trend: '+3%', trendDirection: 'up', spark: [88, 90, 88, 91, 93, 91] },
@@ -42,7 +123,7 @@ export default function AnalyticsPage() {
               </span>
               Heat Exposure Trends
             </h3>
-            <span className="badge badge-neutral">Weekly</span>
+            <Badge variant="neutral">Weekly</Badge>
           </div>
           <div className="flex-1 relative flex items-end justify-between px-2 pb-6 pt-8 gap-2">
             {/* Threshold line at 52° */}
@@ -87,7 +168,7 @@ export default function AnalyticsPage() {
               </span>
               Hydration Compliance
             </h3>
-            <span className="badge badge-neutral">Weekly</span>
+            <Badge variant="neutral">Weekly</Badge>
           </div>
           <div className="flex-1 relative flex items-end justify-between px-2 pb-6 pt-8 gap-2">
             {HYDRATION_DATA.map((val, i) => (
