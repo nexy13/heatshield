@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useId } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
@@ -31,6 +31,10 @@ export function useRealtime<T extends { [key: string]: any } = { [key: string]: 
   const [latestPayload, setLatestPayload] =
     useState<RealtimePostgresChangesPayload<T> | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  // Unique per hook instance so two components subscribing to the same
+  // table/event/filter never collide on one Supabase channel topic (which
+  // would throw "tried to subscribe multiple times" and crash the tree).
+  const instanceId = useId();
 
   const handlePayload = useCallback(
     (payload: RealtimePostgresChangesPayload<T>) => {
@@ -41,7 +45,7 @@ export function useRealtime<T extends { [key: string]: any } = { [key: string]: 
   );
 
   useEffect(() => {
-    const channelName = `realtime:${schema}:${table}:${event}:${filter ?? 'all'}`;
+    const channelName = `realtime:${schema}:${table}:${event}:${filter ?? 'all'}:${instanceId}`;
 
     const channelConfig: Record<string, unknown> = {
       event,
@@ -69,7 +73,7 @@ export function useRealtime<T extends { [key: string]: any } = { [key: string]: 
         channelRef.current = null;
       }
     };
-  }, [table, event, filter, schema, handlePayload]);
+  }, [table, event, filter, schema, handlePayload, instanceId]);
 
   return { latestPayload };
 }

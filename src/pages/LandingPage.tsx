@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import {
   Shield, ArrowRight, Menu, X, Play, Thermometer, Droplets, Siren, BarChart3,
   Sparkles, FileCheck, ShieldCheck, UserRound, Activity, BellRing, Flame,
-  Ambulance, Database, Code2, Wind, Zap, Workflow, Globe2, Mail, MessageSquare,
-  Plus, Minus, MapPin, CheckCircle2, Quote, Braces, Cpu, Users,
+  Ambulance, Globe2, Mail, MessageSquare,
+  Plus, Minus, MapPin, CheckCircle2, Cpu, Users,
 } from 'lucide-react';
 
 /* ── gradient text helpers ── */
@@ -72,7 +72,6 @@ const NAV = [
   { label: 'Home', href: '#top' },
   { label: 'Features', href: '#features' },
   { label: 'How It Works', href: '#how' },
-  { label: 'Technology', href: '#tech' },
   { label: 'Impact', href: '#impact' },
   { label: 'Contact', href: '#contact' },
 ];
@@ -108,22 +107,6 @@ const WHY = [
   { icon: ShieldCheck, tint: '#2563EB', eyebrow: 'The protection', title: 'A safety net around every worker', body: 'Per-site heat thresholds trigger mandated rest, hydration, and shift limits — turning raw weather data into concrete, life-saving action.' },
   { icon: Cpu, tint: '#0891B2', eyebrow: 'The intelligence', title: 'AI that sees danger coming', body: 'Predictive models flag rising heat-risk before it peaks, so supervisors act early instead of reacting to an emergency already underway.' },
   { icon: Ambulance, tint: '#DC2626', eyebrow: 'The response', title: 'Rescue in minutes, not hours', body: 'One SOS fans out across SMS, WhatsApp, and email with GPS attached, and a full response timeline tracks trigger-to-rescue for accountability.' },
-];
-
-const TECH = [
-  { icon: Code2, label: 'React' },
-  { icon: Braces, label: 'TypeScript' },
-  { icon: Database, label: 'Supabase' },
-  { icon: Database, label: 'PostgreSQL' },
-  { icon: Wind, label: 'Tailwind CSS' },
-  { icon: Zap, label: 'Vite' },
-  { icon: Workflow, label: 'n8n' },
-];
-
-const TESTIMONIALS = [
-  { quote: 'HeatShield lets us respond to emergencies within minutes. The SOS reaches me before a worker even reaches shade.', name: 'Ramesh Gowda', role: 'Site Supervisor', tint: '#2563EB' },
-  { quote: 'The hydration reminders measurably improved worker wellbeing across every shift we run.', name: 'Priya Nair', role: 'Safety Officer', tint: '#16A34A' },
-  { quote: 'A genuinely modern platform solving a real climate challenge — this is what SDG 13 looks like in the field.', name: 'Arjun Mehta', role: 'Project Coordinator', tint: '#7C3AED' },
 ];
 
 const FAQ = [
@@ -457,55 +440,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════════ TECHNOLOGY ═══════════ */}
-      <section id="tech" className="py-20 lg:py-24" style={{ background: 'var(--bg)' }}>
-        <div className="mx-auto px-5 sm:px-8" style={{ maxWidth: 1240 }}>
-          <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-12">
-              <p className="font-semibold uppercase mb-3" style={{ fontSize: '0.72rem', letterSpacing: '0.14em', color: 'var(--brand)' }}>Technology</p>
-              <h2 className="font-serif font-bold leading-tight" style={{ fontSize: 'clamp(1.875rem,4vw,2.5rem)', letterSpacing: '-0.02em' }}>Built on a modern, production-grade stack</h2>
-            </div>
-          </Reveal>
-          <div className="flex flex-wrap justify-center gap-4">
-            {TECH.map((t, i) => (
-              <Reveal key={t.label} delay={i * 0.05}>
-                <div className="lp-card flex items-center gap-2.5 rounded-xl px-5 py-3.5 bg-white" style={{ border: '1px solid var(--border)' }}>
-                  <t.icon size={18} style={{ color: 'var(--brand)' }} />
-                  <span className="font-semibold" style={{ fontSize: '0.9rem' }}>{t.label}</span>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════ TESTIMONIALS ═══════════ */}
-      <section className="mx-auto px-5 sm:px-8 py-20 lg:py-28" style={{ maxWidth: 1240 }}>
-        <Reveal>
-          <div className="max-w-2xl mb-14">
-            <p className="font-semibold uppercase mb-3" style={{ fontSize: '0.72rem', letterSpacing: '0.14em', color: 'var(--brand)' }}>Voices from the field</p>
-            <h2 className="font-serif font-bold leading-tight" style={{ fontSize: 'clamp(2rem,4vw,2.75rem)', letterSpacing: '-0.02em' }}>Trusted by the people who keep sites safe</h2>
-          </div>
-        </Reveal>
-        <div className="grid md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((t, i) => (
-            <Reveal key={t.name} delay={i * 0.08}>
-              <div className="lp-card rounded-2xl p-7 h-full flex flex-col bg-white" style={{ border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
-                <Quote size={26} style={{ color: t.tint, opacity: 0.5 }} />
-                <p className="mt-4 flex-1 leading-relaxed" style={{ fontSize: '0.95rem', color: 'var(--text-secondary)' }}>"{t.quote}"</p>
-                <div className="mt-6 flex items-center gap-3">
-                  <span className="flex items-center justify-center rounded-full font-bold text-white" style={{ width: 42, height: 42, background: `linear-gradient(135deg, ${t.tint}, color-mix(in srgb, ${t.tint} 55%, #000))` }}>{t.name.charAt(0)}</span>
-                  <div>
-                    <div className="font-semibold" style={{ fontSize: '0.9rem' }}>{t.name}</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{t.role}</div>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
       {/* ═══════════ FAQ ═══════════ */}
       <section className="py-20 lg:py-28" style={{ background: 'var(--bg)' }}>
         <div className="mx-auto px-5 sm:px-8" style={{ maxWidth: 820 }}>
@@ -587,7 +521,7 @@ export default function LandingPage() {
             </div>
             <div className="grid grid-cols-3 gap-6">
               {[
-                { h: 'Product', links: [['Features', '#features'], ['How it works', '#how'], ['Technology', '#tech']] },
+                { h: 'Product', links: [['Features', '#features'], ['How it works', '#how'], ['Live dashboard', '#preview']] },
                 { h: 'Company', links: [['Impact', '#impact'], ['Contact', '#contact'], ['Sign in', '/login']] },
                 { h: 'Legal', links: [['Privacy Policy', '#contact'], ['Terms', '#contact'], ['GitHub', '#contact']] },
               ].map((col) => (
