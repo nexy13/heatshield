@@ -24,7 +24,6 @@ import {
   HardHat,
   CloudSun,
   Users,
-  MessageSquare,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getSiteById } from '@/lib/api/sites';
@@ -77,8 +76,8 @@ function KioskGauge({ heatIndex, color }: { heatIndex: number | null; color: str
   });
 
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-[135deg]">
+    <div className="relative w-full max-w-[280px] mx-auto aspect-square">
+      <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="-rotate-[135deg]">
         <defs>
           <linearGradient id="kiosk-gauge-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={color} stopOpacity="0.45" />
@@ -194,7 +193,14 @@ function MetricTile({
       </div>
       <div className="min-w-0">
         <p className="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{label}</p>
-        <p className="kiosk-metric text-3xl font-bold text-slate-100 whitespace-nowrap">{value}</p>
+        <p className="kiosk-metric text-2xl lg:text-3xl font-bold text-slate-100 whitespace-nowrap leading-none">
+          {value.split(' ')[0]}
+          {value.includes(' ') && (
+            <span className="text-sm lg:text-base font-semibold text-slate-400 ml-1">
+              {value.slice(value.indexOf(' ') + 1)}
+            </span>
+          )}
+        </p>
       </div>
     </div>
   );
@@ -445,9 +451,9 @@ export default function KioskPage() {
 
   if (loading) {
     return (
-      <div className="kiosk-root min-h-screen text-white flex flex-col font-sans select-none overflow-hidden h-screen animate-fade-in">
+      <div className="kiosk-root min-h-screen text-white flex flex-col font-sans select-none lg:overflow-hidden lg:h-screen animate-fade-in">
         {/* Skeleton Header */}
-        <header className="flex justify-between items-center px-10 py-6" style={{ borderBottom: '1px solid rgba(148,163,184,0.1)' }}>
+        <header className="flex justify-between items-center px-4 sm:px-6 lg:px-10 py-4 lg:py-6" style={{ borderBottom: '1px solid rgba(148,163,184,0.1)' }}>
           <div className="flex items-center gap-4">
             <div className="skeleton w-12 h-12 rounded-2xl" style={{ background: 'rgba(148,163,184,0.12)' }} />
             <div className="space-y-2">
@@ -462,8 +468,8 @@ export default function KioskPage() {
         </header>
 
         {/* Skeleton Main */}
-        <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 p-10 overflow-hidden">
-          <div className="flex flex-col gap-8 h-full overflow-hidden justify-between">
+        <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-8 p-4 sm:p-6 lg:p-10 lg:overflow-hidden">
+          <div className="flex flex-col gap-5 lg:gap-8 lg:h-full lg:overflow-hidden justify-between">
             <div className="kiosk-panel flex-1 flex items-center justify-center">
               <div className="skeleton w-64 h-64 rounded-full" style={{ background: 'rgba(148,163,184,0.08)' }} />
             </div>
@@ -543,7 +549,7 @@ export default function KioskPage() {
   );
 
   return (
-    <div className="kiosk-root min-h-screen text-white flex flex-col font-sans select-none overflow-hidden h-screen relative">
+    <div className="kiosk-root min-h-screen text-white flex flex-col font-sans select-none relative lg:overflow-hidden lg:h-screen">
       {/* Danger stripes overlay when extreme/danger */}
       {isDangerous && (
         <div className="kiosk-danger-stripe absolute inset-x-0 top-0 h-1.5 z-20" aria-hidden="true" />
@@ -551,7 +557,7 @@ export default function KioskPage() {
 
       {/* ── HEADER ── */}
       <header
-        className="flex justify-between items-center px-10 py-5 relative z-10"
+        className="flex justify-between items-center gap-3 px-4 sm:px-6 lg:px-10 py-4 lg:py-5 relative z-10"
         style={{
           borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
           background: 'rgba(6, 13, 31, 0.5)',
@@ -559,21 +565,21 @@ export default function KioskPage() {
           WebkitBackdropFilter: 'blur(12px)',
         }}
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 lg:gap-4 min-w-0">
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center"
+            className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl flex items-center justify-center shrink-0"
             style={{
               background: 'linear-gradient(135deg, #F97316, #DC2626)',
               boxShadow: '0 8px 24px rgba(234, 88, 12, 0.4)',
             }}
           >
-            <Flame className="w-6 h-6 text-white" />
+            <Flame className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
           </div>
           <div>
-            <p className="text-[0.65rem] font-bold tracking-[0.3em] uppercase" style={{ color: '#93C5FD' }}>
+            <p className="text-[0.6rem] lg:text-[0.65rem] font-bold tracking-[0.15em] lg:tracking-[0.3em] uppercase" style={{ color: '#93C5FD' }}>
               HEATSHIELD · Safety Terminal
             </p>
-            <h1 className="font-serif text-2xl lg:text-3xl font-bold tracking-tight text-slate-50 leading-tight mt-0.5">
+            <h1 className="font-serif text-lg sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-50 leading-tight mt-0.5">
               {site.name}
             </h1>
             <p className="text-[0.7rem] text-slate-400 tracking-[0.2em] uppercase font-semibold mt-0.5">
@@ -582,7 +588,7 @@ export default function KioskPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 lg:gap-6 shrink-0">
           {/* Live status cluster */}
           <div className="hidden md:flex flex-col items-end gap-1.5">
             <div className="flex items-center gap-2">
@@ -613,7 +619,7 @@ export default function KioskPage() {
           </div>
 
           <div className="text-right">
-            <div className="kiosk-clock text-5xl font-bold text-slate-100">
+            <div className="kiosk-clock text-2xl sm:text-3xl lg:text-5xl font-bold text-slate-100">
               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </div>
             <div className="text-sm text-slate-400 font-semibold tracking-wide mt-1">
@@ -624,14 +630,14 @@ export default function KioskPage() {
       </header>
 
       {/* ── KIOSK MAIN SPLIT ── */}
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 p-8 lg:p-10 overflow-hidden relative z-10">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-8 p-4 sm:p-6 lg:p-10 lg:overflow-hidden relative z-10">
 
         {/* LEFT COLUMN: LIVE WEATHER & HYDRATION COUNTER */}
-        <div className="flex flex-col gap-6 h-full overflow-hidden">
+        <div className="flex flex-col gap-5 lg:gap-6 lg:h-full lg:overflow-hidden">
 
           {/* WEATHER / RISK PANEL */}
           <div
-            className="kiosk-panel p-8 flex flex-col flex-1 min-h-0"
+            className="kiosk-panel p-5 sm:p-6 lg:p-8 flex flex-col flex-1 min-h-0"
             style={isDangerous ? { borderColor: 'rgba(248, 113, 113, 0.4)', boxShadow: `0 0 60px ${riskColor}25, inset 0 1px 0 rgba(255,255,255,0.05)` } : undefined}
           >
             <div className="flex justify-between items-start mb-2">
@@ -699,21 +705,21 @@ export default function KioskPage() {
           </div>
 
           {/* HYDRATION STATUS */}
-          <div className="kiosk-panel p-7 flex items-center justify-between gap-6">
-            <div className="flex items-center gap-5">
+          <div className="kiosk-panel p-5 lg:p-7 flex items-center justify-between gap-4 lg:gap-6">
+            <div className="flex items-center gap-3 lg:gap-5 min-w-0">
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0"
+                className="w-12 h-12 lg:w-16 lg:h-16 rounded-2xl flex items-center justify-center shrink-0"
                 style={{
                   background: 'rgba(59, 130, 246, 0.12)',
                   border: '1px solid rgba(96, 165, 250, 0.3)',
                   boxShadow: '0 0 30px rgba(59, 130, 246, 0.15)',
                 }}
               >
-                <Droplets className="w-8 h-8" style={{ color: '#60A5FA' }} />
+                <Droplets className="w-6 h-6 lg:w-8 lg:h-8" style={{ color: '#60A5FA' }} />
               </div>
-              <div>
-                <h3 className="text-2xl font-bold text-slate-100">Hydration Reminder</h3>
-                <p className="text-slate-400 text-base mt-1">
+              <div className="min-w-0">
+                <h3 className="text-lg lg:text-2xl font-bold text-slate-100">Hydration Reminder</h3>
+                <p className="text-slate-400 text-sm lg:text-base mt-1">
                   Drink 250ml water every {site.hydration_interval_min || 30} minutes.
                 </p>
               </div>
@@ -724,7 +730,7 @@ export default function KioskPage() {
                 <Clock className="w-3.5 h-3.5" /> Next Break In
               </p>
               <div
-                className="relative rounded-2xl px-6 py-3 overflow-hidden"
+                className="relative rounded-2xl px-4 lg:px-6 py-2.5 lg:py-3 overflow-hidden"
                 style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(96, 165, 250, 0.25)' }}
               >
                 {/* Draining progress fill */}
@@ -733,7 +739,7 @@ export default function KioskPage() {
                   className="absolute inset-y-0 left-0 transition-all duration-1000"
                   style={{ width: `${hydrationProgress * 100}%`, background: 'rgba(59, 130, 246, 0.12)' }}
                 />
-                <span className="kiosk-timer relative text-5xl font-bold" style={{ color: '#60A5FA' }}>
+                <span className="kiosk-timer relative text-3xl lg:text-5xl font-bold" style={{ color: '#60A5FA' }}>
                   {formatTime(hydrationTimeLeft)}
                 </span>
               </div>
@@ -743,8 +749,8 @@ export default function KioskPage() {
         </div>
 
         {/* RIGHT COLUMN: MASSIVE SOS DISPATCH BUTTON + RESPONSE READINESS */}
-        <div className="flex flex-col gap-6 h-full min-h-0">
-          <div className="kiosk-sos-stage flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-7 relative">
+        <div className="flex flex-col gap-6 lg:h-full lg:min-h-0">
+          <div className="kiosk-sos-stage flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-6 lg:gap-7 py-6 lg:py-0 relative">
             <button
               onClick={handleSosPress}
               aria-label="Trigger emergency SOS"
@@ -769,7 +775,6 @@ export default function KioskPage() {
 
             {/* Guarantee chips */}
             <div className="flex flex-wrap items-center justify-center gap-2 relative z-10">
-              <span className="kiosk-sos-chip"><MessageSquare size={13} strokeWidth={2.5} /> SMS Supervisor</span>
               <span className="kiosk-sos-chip"><Satellite size={13} strokeWidth={2.5} /> GPS Shared</span>
               <span className="kiosk-sos-chip"><CheckCircle size={13} strokeWidth={2.5} /> Incident Logged</span>
             </div>
@@ -807,7 +812,7 @@ export default function KioskPage() {
       {/* ── FULL-SCREEN HYDRATION BREAK OVERLAY ── */}
       {showHydrationAlert && (
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center text-center p-12 z-40 animate-fade-in"
+          className="fixed inset-0 flex flex-col items-center justify-center text-center p-6 sm:p-12 z-40 animate-fade-in"
           style={{
             background:
               'radial-gradient(900px 600px at 50% 20%, rgba(59, 130, 246, 0.25), transparent 60%), linear-gradient(170deg, #0A1A3A 0%, #081124 100%)',
@@ -846,7 +851,7 @@ export default function KioskPage() {
       {/* ── SOS SELECTION DIALOG (OVERLAY) ── */}
       {sosModalOpen && (
         <div
-          className="absolute inset-0 flex items-center justify-center p-10 z-50 animate-fade-in"
+          className="fixed inset-0 flex items-center justify-center p-4 sm:p-10 z-50 animate-fade-in"
           style={{ background: 'rgba(3, 7, 18, 0.94)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
         >
 

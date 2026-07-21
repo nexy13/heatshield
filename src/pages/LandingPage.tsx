@@ -4,12 +4,135 @@ import {
   Shield, ArrowRight, Menu, X, Play, Thermometer, Droplets, Siren, BarChart3,
   Sparkles, FileCheck, ShieldCheck, UserRound, Activity, BellRing, Flame,
   Ambulance, Globe2, Mail, MessageSquare,
-  Plus, Minus, MapPin, CheckCircle2, Cpu, Users,
+  Plus, Minus, MapPin, CheckCircle2, Cpu, Users, Languages, ChevronDown, Check,
 } from 'lucide-react';
+import { LANGUAGES, LANDING_TRANSLATIONS, type LanguageCode } from '@/lib/i18n/landing';
 
 /* ── gradient text helpers ── */
 const brandGrad: CSSProperties = { background: 'linear-gradient(90deg,#2563EB,#22D3EE)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' };
 const heatGrad: CSSProperties = { background: 'linear-gradient(90deg,#F97316,#EF4444)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' };
+
+const LANG_STORAGE_KEY = 'heatshield_landing_lang';
+
+/* ── persisted language preference (landing page only) ── */
+function useLandingLanguage(): [LanguageCode, (l: LanguageCode) => void] {
+  const [lang, setLangState] = useState<LanguageCode>(() => {
+    try {
+      const saved = localStorage.getItem(LANG_STORAGE_KEY);
+      if (saved && saved in LANDING_TRANSLATIONS) return saved as LanguageCode;
+    } catch {
+      /* localStorage unavailable — fall back to English */
+    }
+    return 'en';
+  });
+
+  useEffect(() => {
+    const prevLang = document.documentElement.lang;
+    document.documentElement.lang = lang;
+    return () => {
+      document.documentElement.lang = prevLang;
+    };
+  }, [lang]);
+
+  const setLang = (l: LanguageCode) => {
+    setLangState(l);
+    try {
+      localStorage.setItem(LANG_STORAGE_KEY, l);
+    } catch {
+      /* ignore persistence failure */
+    }
+  };
+
+  return [lang, setLang];
+}
+
+/* ── language dropdown (desktop nav + mobile drawer) ── */
+function LanguageSwitcher({
+  lang,
+  onChange,
+  label,
+  compact = false,
+}: {
+  lang: LanguageCode;
+  onChange: (l: LanguageCode) => void;
+  label: string;
+  compact?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const current = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={label}
+        className="inline-flex items-center gap-1.5 font-semibold rounded-lg transition-colors"
+        style={
+          compact
+            ? { fontSize: '0.875rem', color: 'var(--text-secondary)', padding: '0.5rem 0.25rem' }
+            : { fontSize: '0.875rem', color: 'var(--text-secondary)', padding: '0.5rem 0.6rem' }
+        }
+      >
+        <Languages size={16} />
+        {!compact && <span>{current.native}</span>}
+        <ChevronDown size={13} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          aria-label={label}
+          className="absolute right-0 mt-2 py-1.5 rounded-2xl bg-white z-10"
+          style={{ minWidth: 168, border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
+        >
+          {LANGUAGES.map((l) => {
+            const selected = l.code === lang;
+            return (
+              <button
+                key={l.code}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  onChange(l.code);
+                  setOpen(false);
+                }}
+                className="w-full flex items-center justify-between gap-3 text-left px-3.5 py-2 transition-colors"
+                style={{ fontSize: '0.875rem', color: selected ? 'var(--brand-strong)' : 'var(--text)', fontWeight: selected ? 700 : 500 }}
+              >
+                <span className="flex items-baseline gap-2">
+                  <span>{l.native}</span>
+                  {l.native !== l.english && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{l.english}</span>}
+                </span>
+                {selected && <Check size={14} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ── scroll-reveal wrapper (IntersectionObserver, inline transitions) ── */
 function Reveal({ children, className = '', delay = 0, y = 24 }: { children: ReactNode; className?: string; delay?: number; y?: number }) {
@@ -68,53 +191,40 @@ function Counter({ to, suffix = '', duration = 1500 }: { to: number; suffix?: st
   return <span ref={ref}>{val}{suffix}</span>;
 }
 
-const NAV = [
-  { label: 'Home', href: '#top' },
-  { label: 'Features', href: '#features' },
-  { label: 'How It Works', href: '#how' },
-  { label: 'Impact', href: '#impact' },
-  { label: 'Contact', href: '#contact' },
+/* ── static per-item visuals (icons/tints); text comes from translations, zipped by index ── */
+const NAV_HREFS = ['#top', '#features', '#how', '#impact', '#contact'] as const;
+const TRUST_ICONS = [Flame, ShieldCheck, Activity, Siren, Sparkles];
+const FEATURES_META = [
+  { icon: Thermometer, tint: '#EA580C' },
+  { icon: Droplets, tint: '#2563EB' },
+  { icon: Siren, tint: '#DC2626' },
+  { icon: BarChart3, tint: '#7C3AED' },
+  { icon: Sparkles, tint: '#0891B2' },
+  { icon: FileCheck, tint: '#16A34A' },
 ];
-
-const TRUST = [
-  { icon: Flame, label: 'UN SDG 13' },
-  { icon: ShieldCheck, label: 'Worker Safety' },
-  { icon: Activity, label: 'Real-Time Monitoring' },
-  { icon: Siren, label: 'Emergency Response' },
-  { icon: Sparkles, label: 'AI Powered' },
+const STEPS_ICONS = [UserRound, Thermometer, Droplets, Siren, BellRing, ShieldCheck];
+const WHY_META = [
+  { icon: Flame, tint: '#EA580C' },
+  { icon: ShieldCheck, tint: '#2563EB' },
+  { icon: Cpu, tint: '#0891B2' },
+  { icon: Ambulance, tint: '#DC2626' },
 ];
-
-const FEATURES = [
-  { icon: Thermometer, title: 'Real-Time Heat Monitoring', points: ['Live heat index', 'Temperature', 'Humidity'], tint: '#EA580C' },
-  { icon: Droplets, title: 'Hydration Management', points: ['Automatic reminders', 'Water tracking', 'Shift safety'], tint: '#2563EB' },
-  { icon: Siren, title: 'Emergency SOS', points: ['One-click SOS', 'Supervisor notification', 'Incident tracking'], tint: '#DC2626' },
-  { icon: BarChart3, title: 'Analytics Dashboard', points: ['Heat trends', 'Compliance', 'Risk analysis'], tint: '#7C3AED' },
-  { icon: Sparkles, title: 'AI Insights', points: ['Predictive alerts', 'Heat-risk forecasting', 'Safety recommendations'], tint: '#0891B2' },
-  { icon: FileCheck, title: 'Compliance Management', points: ['Safety reports', 'Government compliance', 'Audit readiness'], tint: '#16A34A' },
+const PREVIEW_META = [
+  { icon: Thermometer, tint: '#F87171', v: '54°C' },
+  { icon: Siren, tint: '#4ADE80', v: '0' },
+  { icon: BarChart3, tint: '#60A5FA', v: '98%' },
 ];
-
-const STEPS = [
-  { icon: UserRound, title: 'Worker Starts Shift', desc: 'Check-in at the kiosk begins live protection.' },
-  { icon: Thermometer, title: 'Sensors Monitor Heat', desc: 'Heat index computed continuously per site.' },
-  { icon: Droplets, title: 'Hydration Reminders', desc: 'Timed water breaks adapt to conditions.' },
-  { icon: Siren, title: 'SOS Detection', desc: 'A tap — or a threshold breach — raises the alarm.' },
-  { icon: BellRing, title: 'Supervisor Alert', desc: 'SMS, WhatsApp & email dispatched in seconds.' },
-  { icon: ShieldCheck, title: 'Worker Safety', desc: 'Response coordinated, incident fully logged.' },
+const IMPACT_NODES: ReactNode[] = [
+  <Counter key="workers" to={500} suffix="+" />,
+  <Counter key="success" to={99} suffix="%" />,
+  '24/7',
+  <Counter key="sites" to={5} />,
 ];
-
-const WHY = [
-  { icon: Flame, tint: '#EA580C', eyebrow: 'The challenge', title: 'Heatwaves are getting deadlier', body: 'Kiln surfaces exceed 50°C and workers labour for hours with little shade. Heat stress is silent, cumulative, and often fatal before anyone notices.' },
-  { icon: ShieldCheck, tint: '#2563EB', eyebrow: 'The protection', title: 'A safety net around every worker', body: 'Per-site heat thresholds trigger mandated rest, hydration, and shift limits — turning raw weather data into concrete, life-saving action.' },
-  { icon: Cpu, tint: '#0891B2', eyebrow: 'The intelligence', title: 'AI that sees danger coming', body: 'Predictive models flag rising heat-risk before it peaks, so supervisors act early instead of reacting to an emergency already underway.' },
-  { icon: Ambulance, tint: '#DC2626', eyebrow: 'The response', title: 'Rescue in minutes, not hours', body: 'One SOS fans out across SMS, WhatsApp, and email with GPS attached, and a full response timeline tracks trigger-to-rescue for accountability.' },
-];
-
-const FAQ = [
-  { q: 'How does the SOS work?', a: 'A worker taps the SOS button on the on-site kiosk (or triggers it anonymously). The incident is logged instantly and the assigned supervisor is alerted across SMS, WhatsApp, and email with the worker’s GPS location and medical details attached.' },
-  { q: 'How are supervisors notified?', a: 'Notifications fan out through multiple channels simultaneously — Twilio SMS/WhatsApp and email — so an alert never depends on a single point of failure. Delivery status is recorded on the incident timeline.' },
-  { q: 'How is the Heat Index calculated?', a: 'Live temperature and humidity per site are fed into the NOAA/NWS Rothfusz regression to produce a real-feel heat index, which maps to risk levels that drive automated rest, hydration, and shift rules.' },
-  { q: 'Can it be deployed at multiple kiln sites?', a: 'Yes. HeatShield is multi-site from day one — each kiln runs its own live monitoring, roster, hydration cadence, and supervisor, all visible from a single admin console.' },
-];
+const FOOTER_LINK_META = [
+  { colKey: 'product', links: [['features', '#features'], ['howItWorks', '#how'], ['liveDashboard', '#preview']] },
+  { colKey: 'company', links: [['impact', '#impact'], ['contact', '#contact'], ['signIn', '/login']] },
+  { colKey: 'legal', links: [['privacy', '#contact'], ['terms', '#contact'], ['github', '#contact']] },
+] as const;
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
@@ -122,12 +232,22 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [lang, setLang] = useLandingLanguage();
+  const t = LANDING_TRANSLATIONS[lang];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const navLabels = [t.nav.home, t.nav.features, t.nav.how, t.nav.impact, t.nav.contact];
+  const footerLinkLabels: Record<string, string> = {
+    features: t.footer.links.features, howItWorks: t.footer.links.howItWorks, liveDashboard: t.footer.links.liveDashboard,
+    impact: t.footer.links.impact, contact: t.footer.links.contact, signIn: t.footer.links.signIn,
+    privacy: t.footer.links.privacy, terms: t.footer.links.terms, github: t.footer.links.github,
+  };
+  const footerColLabels: Record<string, string> = { product: t.footer.columns.product, company: t.footer.columns.company, legal: t.footer.columns.legal };
 
   return (
     <div id="top" style={{ background: 'var(--bg-white)', color: 'var(--text)', overflowX: 'hidden' }}>
@@ -147,23 +267,24 @@ export default function LandingPage() {
             <span className="flex items-center justify-center rounded-xl" style={{ width: 34, height: 34, background: 'var(--brand-panel)', boxShadow: '0 6px 16px rgba(37,99,235,0.35)' }}>
               <Shield size={17} color="#fff" strokeWidth={2.25} />
             </span>
-            <span className="font-serif font-bold tracking-[0.08em]" style={{ fontSize: '0.95rem', color: scrolled ? 'var(--text)' : 'var(--text)' }}>HEATSHIELD</span>
+            <span className="font-serif font-bold tracking-[0.08em]" style={{ fontSize: '0.95rem', color: 'var(--text)' }}>HEATSHIELD</span>
           </a>
 
           <div className="hidden lg:flex items-center gap-8">
-            {NAV.map((n) => (
-              <a key={n.href} href={n.href} className="lp-navlink no-underline font-medium transition-colors" style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                {n.label}
+            {NAV_HREFS.map((href, i) => (
+              <a key={href} href={href} className="lp-navlink no-underline font-medium transition-colors" style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                {navLabels[i]}
               </a>
             ))}
           </div>
 
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2">
+            <LanguageSwitcher lang={lang} onChange={setLang} label={t.languageLabel} />
             <Link to="/login" className="no-underline font-semibold px-3 py-2 rounded-lg transition-colors" style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              Login
+              {t.actions.login}
             </Link>
             <Link to="/login" className="lp-shine btn-primary no-underline" style={{ fontSize: '0.875rem', padding: '0.6rem 1.15rem', borderRadius: 10 }}>
-              Get Started <ArrowRight size={15} />
+              {t.actions.getStarted} <ArrowRight size={15} />
             </Link>
           </div>
 
@@ -183,13 +304,17 @@ export default function LandingPage() {
               <button onClick={() => setMenuOpen(false)} aria-label="Close menu" className="btn-icon"><X size={20} /></button>
             </div>
             <div className="flex flex-col gap-1">
-              {NAV.map((n) => (
-                <a key={n.href} href={n.href} onClick={() => setMenuOpen(false)} className="no-underline font-medium py-3 px-2 rounded-lg" style={{ color: 'var(--text-secondary)' }}>{n.label}</a>
+              {NAV_HREFS.map((href, i) => (
+                <a key={href} href={href} onClick={() => setMenuOpen(false)} className="no-underline font-medium py-3 px-2 rounded-lg" style={{ color: 'var(--text-secondary)' }}>{navLabels[i]}</a>
               ))}
             </div>
+            <div className="mt-6 mb-2 pt-5 flex items-center justify-between" style={{ borderTop: '1px solid var(--border)' }}>
+              <span className="font-semibold uppercase" style={{ fontSize: '0.72rem', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>{t.languageLabel}</span>
+              <LanguageSwitcher lang={lang} onChange={setLang} label={t.languageLabel} compact />
+            </div>
             <div className="mt-auto flex flex-col gap-3">
-              <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-secondary justify-center no-underline">Login</Link>
-              <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-primary justify-center no-underline">Get Started <ArrowRight size={15} /></Link>
+              <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-secondary justify-center no-underline">{t.actions.login}</Link>
+              <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-primary justify-center no-underline">{t.actions.getStarted} <ArrowRight size={15} /></Link>
             </div>
           </div>
         </div>
@@ -207,33 +332,33 @@ export default function LandingPage() {
             <Reveal>
               <span className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 mb-6" style={{ background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.2)' }}>
                 <span className="pulse-dot" style={{ background: 'var(--brand)', width: 6, height: 6 }} />
-                <span className="font-semibold uppercase" style={{ fontSize: '0.68rem', letterSpacing: '0.14em', color: 'var(--brand-strong)' }}>UN SDG 13 · Climate Action</span>
+                <span className="font-semibold uppercase" style={{ fontSize: '0.68rem', letterSpacing: '0.14em', color: 'var(--brand-strong)' }}>{t.hero.badge}</span>
               </span>
             </Reveal>
             <Reveal delay={0.06}>
               <h1 className="font-serif font-bold leading-[1.04]" style={{ fontSize: 'clamp(2.5rem, 5.4vw, 4rem)', letterSpacing: '-0.03em' }}>
-                Protecting brick kiln workers from <span style={heatGrad}>extreme heat</span>.
+                {t.hero.titlePrefix} <span style={heatGrad}>{t.hero.titleHighlight}</span>.
               </h1>
             </Reveal>
             <Reveal delay={0.12}>
               <p className="mt-6 leading-relaxed" style={{ fontSize: '1.0625rem', color: 'var(--text-muted)', maxWidth: 540 }}>
-                AI-powered heat monitoring, hydration management, real-time emergency response, and predictive analytics — helping save lives in the world's most hazardous working environments.
+                {t.hero.subtitle}
               </p>
             </Reveal>
             <Reveal delay={0.18}>
               <div className="mt-9 flex flex-col sm:flex-row gap-4">
                 <Link to="/login" className="lp-shine btn-primary justify-center no-underline" style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem', borderRadius: 12 }}>
-                  Get Started <ArrowRight size={16} />
+                  {t.actions.getStarted} <ArrowRight size={16} />
                 </Link>
                 <a href="#preview" className="btn-secondary justify-center no-underline" style={{ padding: '0.85rem 1.5rem', fontSize: '0.95rem', borderRadius: 12 }}>
-                  <Play size={15} /> Watch Demo
+                  <Play size={15} /> {t.actions.watchDemo}
                 </a>
               </div>
             </Reveal>
             <Reveal delay={0.24}>
               <div className="mt-9 flex items-center gap-6" style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={15} style={{ color: 'var(--safe)' }} /> Live in production</span>
-                <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={15} style={{ color: 'var(--safe)' }} /> Multi-site ready</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={15} style={{ color: 'var(--safe)' }} /> {t.hero.liveInProduction}</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={15} style={{ color: 'var(--safe)' }} /> {t.hero.multiSiteReady}</span>
               </div>
             </Reveal>
           </div>
@@ -246,40 +371,40 @@ export default function LandingPage() {
                   <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#F87171' }} />
                   <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#FBBF24' }} />
                   <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#4ADE80' }} />
-                  <span className="ml-2 font-semibold uppercase tracking-wide" style={{ fontSize: '0.6rem', color: '#93C5FD' }}>HeatShield · Anekal Cluster</span>
-                  <span className="ml-auto inline-flex items-center gap-1 font-bold uppercase" style={{ fontSize: '0.55rem', color: '#4ADE80' }}><span className="pulse-dot" style={{ background: '#4ADE80', width: 5, height: 5 }} /> Live</span>
+                  <span className="ml-2 font-semibold uppercase tracking-wide" style={{ fontSize: '0.6rem', color: '#93C5FD' }}>{t.mockup.cluster}</span>
+                  <span className="ml-auto inline-flex items-center gap-1 font-bold uppercase" style={{ fontSize: '0.55rem', color: '#4ADE80' }}><span className="pulse-dot" style={{ background: '#4ADE80', width: 5, height: 5 }} /> {t.mockup.live}</span>
                 </div>
                 <div className="p-5 grid grid-cols-3 gap-3">
                   <div className="col-span-2 rounded-2xl p-4" style={{ background: 'rgba(220,38,38,0.14)', border: '1px solid rgba(248,113,113,0.28)' }}>
-                    <div className="font-semibold uppercase tracking-wide" style={{ fontSize: '0.58rem', color: '#FCA5A5' }}>Live Heat Index</div>
+                    <div className="font-semibold uppercase tracking-wide" style={{ fontSize: '0.58rem', color: '#FCA5A5' }}>{t.mockup.liveHeatIndex}</div>
                     <div className="font-serif font-bold mt-1" style={{ fontSize: '2.6rem', color: '#F87171', lineHeight: 1 }}>54°<span style={{ fontSize: '1rem' }}>C</span></div>
-                    <span className="inline-flex items-center gap-1.5 mt-2 rounded-full px-2.5 py-1 font-bold uppercase" style={{ fontSize: '0.55rem', background: 'rgba(220,38,38,0.2)', color: '#FCA5A5' }}><span className="pulse-dot" style={{ background: '#F87171', width: 5, height: 5 }} /> Danger · Stop work</span>
+                    <span className="inline-flex items-center gap-1.5 mt-2 rounded-full px-2.5 py-1 font-bold uppercase" style={{ fontSize: '0.55rem', background: 'rgba(220,38,38,0.2)', color: '#FCA5A5' }}><span className="pulse-dot" style={{ background: '#F87171', width: 5, height: 5 }} /> {t.mockup.dangerStopWork}</span>
                   </div>
                   <div className="rounded-2xl p-3 flex flex-col justify-between" style={{ background: 'rgba(148,163,184,0.08)' }}>
                     <Users size={15} style={{ color: '#60A5FA' }} />
-                    <div><div className="font-bold text-white" style={{ fontSize: '1.15rem' }}>24</div><div style={{ fontSize: '0.52rem', color: '#94A3B8' }}>on site</div></div>
+                    <div><div className="font-bold text-white" style={{ fontSize: '1.15rem' }}>24</div><div style={{ fontSize: '0.52rem', color: '#94A3B8' }}>{t.mockup.onSite}</div></div>
                   </div>
                   <div className="rounded-2xl p-3" style={{ background: 'rgba(148,163,184,0.08)' }}>
                     <div className="flex items-center gap-1" style={{ color: '#FB923C' }}><Thermometer size={12} /><span className="font-bold text-white" style={{ fontSize: '0.85rem' }}>46°C</span></div>
-                    <div style={{ fontSize: '0.52rem', color: '#94A3B8' }}>Air temp</div>
+                    <div style={{ fontSize: '0.52rem', color: '#94A3B8' }}>{t.mockup.airTemp}</div>
                   </div>
                   <div className="rounded-2xl p-3" style={{ background: 'rgba(148,163,184,0.08)' }}>
                     <div className="flex items-center gap-1" style={{ color: '#60A5FA' }}><Droplets size={12} /><span className="font-bold text-white" style={{ fontSize: '0.85rem' }}>38%</span></div>
-                    <div style={{ fontSize: '0.52rem', color: '#94A3B8' }}>Humidity</div>
+                    <div style={{ fontSize: '0.52rem', color: '#94A3B8' }}>{t.mockup.humidity}</div>
                   </div>
                   <div className="rounded-2xl p-3 flex items-center gap-2" style={{ background: 'rgba(74,222,128,0.1)' }}>
-                    <ShieldCheck size={14} style={{ color: '#4ADE80' }} /><span style={{ fontSize: '0.58rem', color: '#86EFAC', fontWeight: 700 }}>Response ready</span>
+                    <ShieldCheck size={14} style={{ color: '#4ADE80' }} /><span style={{ fontSize: '0.58rem', color: '#86EFAC', fontWeight: 700 }}>{t.mockup.responseReady}</span>
                   </div>
                 </div>
               </div>
               {/* floating chips */}
               <div className="lp-float-2 hidden sm:flex items-center gap-2 absolute -left-5 top-16 rounded-2xl px-3.5 py-2.5 bg-white" style={{ boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)' }}>
                 <span className="flex items-center justify-center rounded-lg" style={{ width: 30, height: 30, background: 'var(--safe-bg)' }}><Siren size={15} style={{ color: 'var(--safe)' }} /></span>
-                <div><div className="font-bold" style={{ fontSize: '0.8rem' }}>SOS delivered</div><div style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>Supervisor · 3s</div></div>
+                <div><div className="font-bold" style={{ fontSize: '0.8rem' }}>{t.mockup.sosDelivered}</div><div style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>{t.mockup.supervisorSec}</div></div>
               </div>
               <div className="lp-float hidden sm:flex items-center gap-2 absolute -right-4 -bottom-4 rounded-2xl px-3.5 py-2.5 bg-white" style={{ boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)' }}>
                 <span className="flex items-center justify-center rounded-lg" style={{ width: 30, height: 30, background: 'rgba(124,58,237,0.12)' }}><Sparkles size={15} style={{ color: '#7C3AED' }} /></span>
-                <div><div className="font-bold" style={{ fontSize: '0.8rem' }}>AI forecast</div><div style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>Peak risk 2:40 PM</div></div>
+                <div><div className="font-bold" style={{ fontSize: '0.8rem' }}>{t.mockup.aiForecast}</div><div style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>{t.mockup.peakRisk}</div></div>
               </div>
             </div>
           </Reveal>
@@ -290,13 +415,13 @@ export default function LandingPage() {
       <section className="border-y" style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
         <div className="mx-auto px-5 sm:px-8 py-10" style={{ maxWidth: 1240 }}>
           <Reveal>
-            <p className="text-center font-semibold uppercase mb-6" style={{ fontSize: '0.72rem', letterSpacing: '0.16em', color: 'var(--text-muted)' }}>Built for Climate Action</p>
+            <p className="text-center font-semibold uppercase mb-6" style={{ fontSize: '0.72rem', letterSpacing: '0.16em', color: 'var(--text-muted)' }}>{t.trust.eyebrow}</p>
           </Reveal>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {TRUST.map((t, i) => (
-              <Reveal key={t.label} delay={i * 0.05}>
+            {TRUST_ICONS.map((Icon, i) => (
+              <Reveal key={i} delay={i * 0.05}>
                 <span className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 bg-white lp-card" style={{ border: '1px solid var(--border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                  <t.icon size={15} style={{ color: 'var(--brand)' }} /> {t.label}
+                  <Icon size={15} style={{ color: 'var(--brand)' }} /> {t.trust.items[i]}
                 </span>
               </Reveal>
             ))}
@@ -308,28 +433,31 @@ export default function LandingPage() {
       <section id="features" className="mx-auto px-5 sm:px-8 py-20 lg:py-28" style={{ maxWidth: 1240 }}>
         <Reveal>
           <div className="max-w-2xl mb-14">
-            <p className="font-semibold uppercase mb-3" style={{ fontSize: '0.72rem', letterSpacing: '0.14em', color: 'var(--brand)' }}>Platform features</p>
-            <h2 className="font-serif font-bold leading-tight" style={{ fontSize: 'clamp(2rem,4vw,2.75rem)', letterSpacing: '-0.02em' }}>Everything a site needs to <span style={brandGrad}>stay safe</span></h2>
+            <p className="font-semibold uppercase mb-3" style={{ fontSize: '0.72rem', letterSpacing: '0.14em', color: 'var(--brand)' }}>{t.features.eyebrow}</p>
+            <h2 className="font-serif font-bold leading-tight" style={{ fontSize: 'clamp(2rem,4vw,2.75rem)', letterSpacing: '-0.02em' }}>{t.features.titlePrefix} <span style={brandGrad}>{t.features.titleHighlight}</span></h2>
           </div>
         </Reveal>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {FEATURES.map((f, i) => (
-            <Reveal key={f.title} delay={(i % 3) * 0.08}>
-              <div className="lp-card rounded-2xl p-7 h-full bg-white" style={{ border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
-                <span className="inline-flex items-center justify-center rounded-2xl mb-5" style={{ width: 48, height: 48, background: `color-mix(in srgb, ${f.tint} 12%, transparent)`, color: f.tint }}>
-                  <f.icon size={22} />
-                </span>
-                <h3 className="font-serif font-bold mb-3" style={{ fontSize: '1.2rem' }}>{f.title}</h3>
-                <ul className="space-y-2">
-                  {f.points.map((p) => (
-                    <li key={p} className="flex items-center gap-2.5" style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                      <CheckCircle2 size={15} style={{ color: f.tint }} /> {p}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Reveal>
-          ))}
+          {FEATURES_META.map((meta, i) => {
+            const f = t.features.items[i];
+            return (
+              <Reveal key={f.title} delay={(i % 3) * 0.08}>
+                <div className="lp-card rounded-2xl p-7 h-full bg-white" style={{ border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                  <span className="inline-flex items-center justify-center rounded-2xl mb-5" style={{ width: 48, height: 48, background: `color-mix(in srgb, ${meta.tint} 12%, transparent)`, color: meta.tint }}>
+                    <meta.icon size={22} />
+                  </span>
+                  <h3 className="font-serif font-bold mb-3" style={{ fontSize: '1.2rem' }}>{f.title}</h3>
+                  <ul className="space-y-2">
+                    {f.points.map((p) => (
+                      <li key={p} className="flex items-center gap-2.5" style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                        <CheckCircle2 size={15} style={{ color: meta.tint }} /> {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
+            );
+          })}
         </div>
       </section>
 
@@ -338,49 +466,53 @@ export default function LandingPage() {
         <div className="mx-auto px-5 sm:px-8" style={{ maxWidth: 1240 }}>
           <Reveal>
             <div className="max-w-2xl mb-14">
-              <p className="font-semibold uppercase mb-3" style={{ fontSize: '0.72rem', letterSpacing: '0.14em', color: 'var(--brand)' }}>How it works</p>
-              <h2 className="font-serif font-bold leading-tight" style={{ fontSize: 'clamp(2rem,4vw,2.75rem)', letterSpacing: '-0.02em' }}>From first shift to safe return</h2>
+              <p className="font-semibold uppercase mb-3" style={{ fontSize: '0.72rem', letterSpacing: '0.14em', color: 'var(--brand)' }}>{t.how.eyebrow}</p>
+              <h2 className="font-serif font-bold leading-tight" style={{ fontSize: 'clamp(2rem,4vw,2.75rem)', letterSpacing: '-0.02em' }}>{t.how.title}</h2>
             </div>
           </Reveal>
           <div className="relative grid gap-6 md:grid-cols-3 lg:grid-cols-6">
             {/* connecting line (desktop) */}
             <div className="hidden lg:block absolute left-0 right-0 top-7 h-px" style={{ background: 'linear-gradient(90deg, transparent, var(--border-strong), transparent)' }} aria-hidden="true" />
-            {STEPS.map((s, i) => (
-              <Reveal key={s.title} delay={i * 0.07}>
-                <div className="relative text-center lg:text-left">
-                  <span className="relative z-10 inline-flex items-center justify-center rounded-2xl mb-4 mx-auto lg:mx-0" style={{ width: 56, height: 56, background: 'var(--brand-panel)', color: '#fff', boxShadow: '0 10px 24px rgba(37,99,235,0.3)' }}>
-                    <s.icon size={24} />
-                  </span>
-                  <div className="font-mono font-bold mb-1" style={{ fontSize: '0.7rem', color: 'var(--brand)' }}>STEP {i + 1}</div>
-                  <h3 className="font-semibold mb-1" style={{ fontSize: '0.95rem' }}>{s.title}</h3>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>{s.desc}</p>
-                </div>
-              </Reveal>
-            ))}
+            {STEPS_ICONS.map((Icon, i) => {
+              const s = t.how.items[i];
+              return (
+                <Reveal key={s.title} delay={i * 0.07}>
+                  <div className="relative text-center lg:text-left">
+                    <span className="relative z-10 inline-flex items-center justify-center rounded-2xl mb-4 mx-auto lg:mx-0" style={{ width: 56, height: 56, background: 'var(--brand-panel)', color: '#fff', boxShadow: '0 10px 24px rgba(37,99,235,0.3)' }}>
+                      <Icon size={24} />
+                    </span>
+                    <div className="font-mono font-bold mb-1" style={{ fontSize: '0.7rem', color: 'var(--brand)' }}>{t.how.step} {i + 1}</div>
+                    <h3 className="font-semibold mb-1" style={{ fontSize: '0.95rem' }}>{s.title}</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>{s.desc}</p>
+                  </div>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ═══════════ WHY HEATSHIELD (alternating) ═══════════ */}
       <section className="mx-auto px-5 sm:px-8 py-20 lg:py-28 space-y-20 lg:space-y-28" style={{ maxWidth: 1240 }}>
-        {WHY.map((w, i) => {
+        {WHY_META.map((meta, i) => {
+          const w = t.why.items[i];
           const reversed = i % 2 === 1;
           return (
             <Reveal key={w.title}>
               <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
                 <div className={reversed ? 'lg:order-2' : ''}>
-                  <span className="inline-flex items-center justify-center rounded-2xl mb-5" style={{ width: 46, height: 46, background: `color-mix(in srgb, ${w.tint} 12%, transparent)`, color: w.tint }}>
-                    <w.icon size={22} />
+                  <span className="inline-flex items-center justify-center rounded-2xl mb-5" style={{ width: 46, height: 46, background: `color-mix(in srgb, ${meta.tint} 12%, transparent)`, color: meta.tint }}>
+                    <meta.icon size={22} />
                   </span>
-                  <p className="font-semibold uppercase mb-2" style={{ fontSize: '0.72rem', letterSpacing: '0.12em', color: w.tint }}>{w.eyebrow}</p>
+                  <p className="font-semibold uppercase mb-2" style={{ fontSize: '0.72rem', letterSpacing: '0.12em', color: meta.tint }}>{w.eyebrow}</p>
                   <h3 className="font-serif font-bold leading-tight" style={{ fontSize: 'clamp(1.5rem,3vw,2.1rem)', letterSpacing: '-0.02em' }}>{w.title}</h3>
                   <p className="mt-4 leading-relaxed" style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>{w.body}</p>
                 </div>
                 <div className={reversed ? 'lg:order-1' : ''}>
-                  <div className="relative rounded-3xl flex items-center justify-center overflow-hidden" style={{ aspectRatio: '5 / 4', background: `linear-gradient(155deg, color-mix(in srgb, ${w.tint} 12%, var(--bg)), var(--bg))`, border: '1px solid var(--border)' }}>
+                  <div className="relative rounded-3xl flex items-center justify-center overflow-hidden" style={{ aspectRatio: '5 / 4', background: `linear-gradient(155deg, color-mix(in srgb, ${meta.tint} 12%, var(--bg)), var(--bg))`, border: '1px solid var(--border)' }}>
                     <div className="lp-grid absolute inset-0" aria-hidden="true" />
-                    <span className="lp-float relative flex items-center justify-center rounded-3xl" style={{ width: 130, height: 130, background: `color-mix(in srgb, ${w.tint} 16%, #fff)`, color: w.tint, boxShadow: `0 24px 50px color-mix(in srgb, ${w.tint} 25%, transparent)` }}>
-                      <w.icon size={60} strokeWidth={1.4} />
+                    <span className="lp-float relative flex items-center justify-center rounded-3xl" style={{ width: 130, height: 130, background: `color-mix(in srgb, ${meta.tint} 16%, #fff)`, color: meta.tint, boxShadow: `0 24px 50px color-mix(in srgb, ${meta.tint} 25%, transparent)` }}>
+                      <meta.icon size={60} strokeWidth={1.4} />
                     </span>
                   </div>
                 </div>
@@ -396,28 +528,27 @@ export default function LandingPage() {
         <div className="relative mx-auto px-5 sm:px-8" style={{ maxWidth: 1240 }}>
           <Reveal>
             <div className="max-w-2xl mb-12">
-              <p className="font-semibold uppercase mb-3" style={{ fontSize: '0.72rem', letterSpacing: '0.14em', color: '#93C5FD' }}>Live dashboard</p>
-              <h2 className="font-serif font-bold leading-tight text-white" style={{ fontSize: 'clamp(2rem,4vw,2.75rem)', letterSpacing: '-0.02em' }}>The control room for worker safety</h2>
-              <p className="mt-4" style={{ fontSize: '1rem', color: 'rgba(226,232,240,0.72)' }}>Every site, every worker, every incident — monitored in real time and logged for compliance.</p>
+              <p className="font-semibold uppercase mb-3" style={{ fontSize: '0.72rem', letterSpacing: '0.14em', color: '#93C5FD' }}>{t.preview.eyebrow}</p>
+              <h2 className="font-serif font-bold leading-tight text-white" style={{ fontSize: 'clamp(2rem,4vw,2.75rem)', letterSpacing: '-0.02em' }}>{t.preview.title}</h2>
+              <p className="mt-4" style={{ fontSize: '1rem', color: 'rgba(226,232,240,0.72)' }}>{t.preview.subtitle}</p>
             </div>
           </Reveal>
           <Reveal delay={0.1} y={30}>
             <div className="grid lg:grid-cols-3 gap-5">
-              {[
-                { icon: Thermometer, k: 'Peak Heat Index', v: '54°C', tint: '#F87171', sub: 'Danger threshold breached' },
-                { icon: Siren, k: 'Active SOS', v: '0', tint: '#4ADE80', sub: 'All workers safe' },
-                { icon: BarChart3, k: 'Compliance', v: '98%', tint: '#60A5FA', sub: 'Audit-ready this month' },
-              ].map((c) => (
-                <div key={c.k} className="rounded-2xl p-6" style={{ background: 'rgba(148,163,184,0.06)', border: '1px solid rgba(148,163,184,0.14)' }}>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="inline-flex items-center justify-center rounded-xl" style={{ width: 40, height: 40, background: `color-mix(in srgb, ${c.tint} 16%, transparent)`, color: c.tint }}><c.icon size={19} /></span>
-                    <span className="font-bold uppercase tracking-wide" style={{ fontSize: '0.58rem', color: '#93C5FD' }}>Live</span>
+              {PREVIEW_META.map((meta, i) => {
+                const c = t.preview.cards[i];
+                return (
+                  <div key={c.k} className="rounded-2xl p-6" style={{ background: 'rgba(148,163,184,0.06)', border: '1px solid rgba(148,163,184,0.14)' }}>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="inline-flex items-center justify-center rounded-xl" style={{ width: 40, height: 40, background: `color-mix(in srgb, ${meta.tint} 16%, transparent)`, color: meta.tint }}><meta.icon size={19} /></span>
+                      <span className="font-bold uppercase tracking-wide" style={{ fontSize: '0.58rem', color: '#93C5FD' }}>{t.preview.live}</span>
+                    </div>
+                    <div className="font-serif font-bold text-white" style={{ fontSize: '2rem', lineHeight: 1 }}>{meta.v}</div>
+                    <div className="mt-1.5 font-semibold" style={{ fontSize: '0.8rem', color: '#E2E8F0' }}>{c.k}</div>
+                    <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: 2 }}>{c.sub}</div>
                   </div>
-                  <div className="font-serif font-bold text-white" style={{ fontSize: '2rem', lineHeight: 1 }}>{c.v}</div>
-                  <div className="mt-1.5 font-semibold" style={{ fontSize: '0.8rem', color: '#E2E8F0' }}>{c.k}</div>
-                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: 2 }}>{c.sub}</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Reveal>
         </div>
@@ -426,15 +557,10 @@ export default function LandingPage() {
       {/* ═══════════ IMPACT (counters) ═══════════ */}
       <section id="impact" className="mx-auto px-5 sm:px-8 py-20 lg:py-24" style={{ maxWidth: 1240 }}>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {[
-            { node: <Counter to={500} suffix="+" />, label: 'Workers protected' },
-            { node: <Counter to={99} suffix="%" />, label: 'Emergency notification success' },
-            { node: '24/7', label: 'Heat monitoring' },
-            { node: <Counter to={5} />, label: 'Kiln sites connected' },
-          ].map((s, i) => (
+          {IMPACT_NODES.map((node, i) => (
             <Reveal key={i} delay={i * 0.08} className="text-center lg:text-left">
-              <div className="font-serif font-bold" style={{ fontSize: 'clamp(2.25rem,5vw,3.25rem)', ...brandGrad, letterSpacing: '-0.02em', lineHeight: 1 }}>{s.node}</div>
-              <div className="mt-2" style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{s.label}</div>
+              <div className="font-serif font-bold" style={{ fontSize: 'clamp(2.25rem,5vw,3.25rem)', ...brandGrad, letterSpacing: '-0.02em', lineHeight: 1 }}>{node}</div>
+              <div className="mt-2" style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{t.impact.items[i]}</div>
             </Reveal>
           ))}
         </div>
@@ -445,12 +571,12 @@ export default function LandingPage() {
         <div className="mx-auto px-5 sm:px-8" style={{ maxWidth: 820 }}>
           <Reveal>
             <div className="text-center mb-12">
-              <p className="font-semibold uppercase mb-3" style={{ fontSize: '0.72rem', letterSpacing: '0.14em', color: 'var(--brand)' }}>FAQ</p>
-              <h2 className="font-serif font-bold leading-tight" style={{ fontSize: 'clamp(1.875rem,4vw,2.5rem)', letterSpacing: '-0.02em' }}>Questions, answered</h2>
+              <p className="font-semibold uppercase mb-3" style={{ fontSize: '0.72rem', letterSpacing: '0.14em', color: 'var(--brand)' }}>{t.faq.eyebrow}</p>
+              <h2 className="font-serif font-bold leading-tight" style={{ fontSize: 'clamp(1.875rem,4vw,2.5rem)', letterSpacing: '-0.02em' }}>{t.faq.title}</h2>
             </div>
           </Reveal>
           <div className="space-y-3">
-            {FAQ.map((f, i) => {
+            {t.faq.items.map((f, i) => {
               const open = openFaq === i;
               return (
                 <Reveal key={f.q} delay={i * 0.04}>
@@ -482,14 +608,14 @@ export default function LandingPage() {
           <div className="lp-blob lp-blob-2" style={{ width: 460, height: 460, top: '-30%', right: '6%', background: 'radial-gradient(circle, rgba(249,115,22,0.3), transparent 66%)' }} aria-hidden="true" />
           <div className="relative mx-auto px-5 sm:px-8 py-20 lg:py-28 text-center" style={{ maxWidth: 900 }}>
             <Reveal>
-              <h2 className="font-serif font-bold leading-tight text-white" style={{ fontSize: 'clamp(2.25rem,5vw,3.25rem)', letterSpacing: '-0.02em' }}>Ready to protect your workforce?</h2>
-              <p className="mt-5 mx-auto" style={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.82)', maxWidth: 560 }}>Start using HeatShield today and bring enterprise-grade heat safety to every kiln site.</p>
+              <h2 className="font-serif font-bold leading-tight text-white" style={{ fontSize: 'clamp(2.25rem,5vw,3.25rem)', letterSpacing: '-0.02em' }}>{t.cta.title}</h2>
+              <p className="mt-5 mx-auto" style={{ fontSize: '1.0625rem', color: 'rgba(255,255,255,0.82)', maxWidth: 560 }}>{t.cta.subtitle}</p>
               <div className="mt-9 flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/login" className="lp-shine no-underline inline-flex items-center justify-center gap-2 font-semibold rounded-xl" style={{ background: '#fff', color: 'var(--brand-strong)', padding: '0.9rem 2rem', fontSize: '0.95rem' }}>
-                  Get Started <ArrowRight size={16} />
+                  {t.actions.getStarted} <ArrowRight size={16} />
                 </Link>
                 <Link to="/login" className="no-underline inline-flex items-center justify-center gap-2 font-semibold rounded-xl" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.35)', padding: '0.9rem 2rem', fontSize: '0.95rem' }}>
-                  View Dashboard
+                  {t.actions.viewDashboard}
                 </Link>
               </div>
             </Reveal>
@@ -506,33 +632,29 @@ export default function LandingPage() {
                 <span className="flex items-center justify-center rounded-xl" style={{ width: 32, height: 32, background: 'var(--brand-panel)' }}><Shield size={16} color="#fff" /></span>
                 <span className="font-serif font-bold tracking-[0.06em] text-white" style={{ fontSize: '0.9rem' }}>HEATSHIELD</span>
               </div>
-              <p className="leading-relaxed mb-5" style={{ fontSize: '0.9rem', color: '#94A3B8' }}>Enterprise climate-tech protecting brick-kiln workers from extreme heat. Real-time monitoring, instant response, full compliance.</p>
+              <p className="leading-relaxed mb-5" style={{ fontSize: '0.9rem', color: '#94A3B8' }}>{t.footer.tagline}</p>
               {subscribed ? (
-                <p className="inline-flex items-center gap-2 font-semibold" style={{ color: '#4ADE80', fontSize: '0.875rem' }}><CheckCircle2 size={16} /> Thanks — you're on the list.</p>
+                <p className="inline-flex items-center gap-2 font-semibold" style={{ color: '#4ADE80', fontSize: '0.875rem' }}><CheckCircle2 size={16} /> {t.footer.subscribed}</p>
               ) : (
                 <form onSubmit={(e) => { e.preventDefault(); if (email.trim()) setSubscribed(true); }} className="flex flex-col sm:flex-row gap-2.5" style={{ maxWidth: 380 }}>
-                  <label htmlFor="lp-news" className="sr-only">Email address</label>
-                  <input id="lp-news" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com"
+                  <label htmlFor="lp-news" className="sr-only">{t.footer.emailLabel}</label>
+                  <input id="lp-news" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.footer.emailPlaceholder}
                     className="flex-1 rounded-xl px-4"
                     style={{ minHeight: 44, background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.2)', color: '#fff', fontSize: '0.875rem', outline: 'none' }} />
-                  <button type="submit" className="rounded-xl font-semibold" style={{ background: 'var(--brand)', color: '#fff', padding: '0 1.25rem', minHeight: 44, fontSize: '0.875rem' }}>Subscribe</button>
+                  <button type="submit" className="rounded-xl font-semibold" style={{ background: 'var(--brand)', color: '#fff', padding: '0 1.25rem', minHeight: 44, fontSize: '0.875rem' }}>{t.actions.subscribe}</button>
                 </form>
               )}
             </div>
             <div className="grid grid-cols-3 gap-6">
-              {[
-                { h: 'Product', links: [['Features', '#features'], ['How it works', '#how'], ['Live dashboard', '#preview']] },
-                { h: 'Company', links: [['Impact', '#impact'], ['Contact', '#contact'], ['Sign in', '/login']] },
-                { h: 'Legal', links: [['Privacy Policy', '#contact'], ['Terms', '#contact'], ['GitHub', '#contact']] },
-              ].map((col) => (
-                <div key={col.h}>
-                  <p className="font-semibold text-white mb-3 uppercase" style={{ fontSize: '0.7rem', letterSpacing: '0.08em' }}>{col.h}</p>
+              {FOOTER_LINK_META.map((col) => (
+                <div key={col.colKey}>
+                  <p className="font-semibold text-white mb-3 uppercase" style={{ fontSize: '0.7rem', letterSpacing: '0.08em' }}>{footerColLabels[col.colKey]}</p>
                   <ul className="space-y-2.5">
-                    {col.links.map(([l, href]) => (
-                      <li key={l}>{href.startsWith('/') ? (
-                        <Link to={href} className="no-underline transition-colors hover:text-white" style={{ fontSize: '0.85rem', color: '#94A3B8' }}>{l}</Link>
+                    {col.links.map(([linkKey, href]) => (
+                      <li key={linkKey}>{href.startsWith('/') ? (
+                        <Link to={href} className="no-underline transition-colors hover:text-white" style={{ fontSize: '0.85rem', color: '#94A3B8' }}>{footerLinkLabels[linkKey]}</Link>
                       ) : (
-                        <a href={href} className="no-underline transition-colors hover:text-white" style={{ fontSize: '0.85rem', color: '#94A3B8' }}>{l}</a>
+                        <a href={href} className="no-underline transition-colors hover:text-white" style={{ fontSize: '0.85rem', color: '#94A3B8' }}>{footerLinkLabels[linkKey]}</a>
                       )}</li>
                     ))}
                   </ul>
@@ -543,7 +665,7 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="inline-flex items-center gap-1.5" style={{ fontSize: '0.85rem', color: '#94A3B8' }}>
-              <MapPin size={13} /> Made with <span style={{ color: '#F87171' }}>♥</span> for SDG 13 · Climate Action
+              <MapPin size={13} /> {t.footer.madeWith}
             </p>
             <div className="flex items-center gap-3">
               {[Globe2, Mail, MessageSquare].map((Icon, i) => (
